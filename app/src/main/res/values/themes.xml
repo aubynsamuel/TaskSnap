@@ -2,4 +2,15 @@
 <resources>
 
     <style name="Theme.AllDay" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <!-- Transparent theme for dialog-like activities (ProcessTextActivity) -->
+    <style name="Theme.AllDay.Transparent" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowIsFloating">true</item>
+        <item name="android:backgroundDimEnabled">true</item>
+    </style>
+
 </resources>
