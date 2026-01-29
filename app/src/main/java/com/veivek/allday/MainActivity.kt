@@ -1,11 +1,10 @@
 package com.veivek.allday
 
 import android.Manifest
-import android.content.IntentFilter
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.telephony.TelephonyManager
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -14,7 +13,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.*
 import androidx.core.content.ContextCompat
-import com.veivek.allday.receiver.CallReceiver
+import com.veivek.allday.service.CallMonitorService
 import com.veivek.allday.ui.components.AddTaskDialog
 import com.veivek.allday.ui.components.CallEndedDialog
 import com.veivek.allday.ui.screens.TaskListScreen
@@ -33,10 +32,6 @@ class MainActivity : ComponentActivity() {
         private const val TAG = "MainActivity"
     }
 
-    // Call receiver for detecting phone state changes
-    private val callReceiver = CallReceiver()
-    private var isReceiverRegistered = false
-
     // State for dialogs
     private var showAddTaskDialog = mutableStateOf(false)
     private var callEndedData = mutableStateOf<CallEndedInfo?>(null)
@@ -51,15 +46,18 @@ class MainActivity : ComponentActivity() {
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
-        val allGranted = permissions.all { it.value }
-        if (allGranted) {
-            Log.d(TAG, "All permissions granted")
-            registerCallReceiver()
+        val granted = permissions.filter { it.value }.keys
+        val denied = permissions.filter { !it.value }.keys
+
+        Log.d(TAG, "Permissions granted: $granted, denied: $denied")
+
+        if (permissions[Manifest.permission.READ_PHONE_STATE] == true) {
+            // Start the foreground service for call monitoring
+            startCallMonitorService()
         } else {
-            Log.w(TAG, "Some permissions denied: $permissions")
             Toast.makeText(
                 this,
-                "Phone permissions needed for call detection feature",
+                "Phone permission needed for call detection feature",
                 Toast.LENGTH_LONG
             ).show()
         }
@@ -69,13 +67,16 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        // Set up call ended callback
-        CallReceiver.onCallEnded = { phoneNumber, contactName, isIncoming ->
-            Log.d(TAG, "Call ended callback: $phoneNumber, $contactName, $isIncoming")
+        // Set up callback for when service detects call ended
+        CallMonitorService.onCallEnded = { phoneNumber, contactName, isIncoming ->
+            Log.d(TAG, "Call ended callback received: $phoneNumber, $contactName, $isIncoming")
             runOnUiThread {
                 callEndedData.value = CallEndedInfo(phoneNumber, contactName, isIncoming)
             }
         }
+
+        // Handle intent from notification
+        handleIntent(intent)
 
         // Request permissions for call detection
         requestPhonePermissions()
@@ -109,18 +110,38 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleIntent(intent)
+    }
+
+    private fun handleIntent(intent: Intent?) {
+        if (intent?.action == CallMonitorService.ACTION_CALL_ENDED) {
+            val phoneNumber = intent.getStringExtra(CallMonitorService.EXTRA_PHONE_NUMBER)
+            val contactName = intent.getStringExtra(CallMonitorService.EXTRA_CONTACT_NAME)
+            val isIncoming = intent.getBooleanExtra(CallMonitorService.EXTRA_IS_INCOMING, false)
+
+            Log.d(TAG, "Received call ended intent: $phoneNumber, $contactName")
+            callEndedData.value = CallEndedInfo(phoneNumber, contactName, isIncoming)
+        }
+    }
+
     private fun requestPhonePermissions() {
-        val permissions = mutableListOf(
-            Manifest.permission.READ_PHONE_STATE
-        )
+        val permissions = mutableListOf<String>()
+
+        // Core permission for call state
+        permissions.add(Manifest.permission.READ_PHONE_STATE)
 
         // READ_CALL_LOG is needed to get phone numbers on Android 9+
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            permissions.add(Manifest.permission.READ_CALL_LOG)
-        }
+        permissions.add(Manifest.permission.READ_CALL_LOG)
 
-        // Optional: for resolving contact names
+        // For resolving contact names
         permissions.add(Manifest.permission.READ_CONTACTS)
+
+        // For foreground service notification on Android 13+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            permissions.add(Manifest.permission.POST_NOTIFICATIONS)
+        }
 
         val permissionsNeeded = permissions.filter {
             ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
@@ -128,41 +149,28 @@ class MainActivity : ComponentActivity() {
 
         if (permissionsNeeded.isEmpty()) {
             Log.d(TAG, "All permissions already granted")
-            registerCallReceiver()
+            startCallMonitorService()
         } else {
             Log.d(TAG, "Requesting permissions: $permissionsNeeded")
             permissionLauncher.launch(permissionsNeeded.toTypedArray())
         }
     }
 
-    private fun registerCallReceiver() {
-        if (isReceiverRegistered) return
-
+    private fun startCallMonitorService() {
         try {
-            val filter = IntentFilter(TelephonyManager.ACTION_PHONE_STATE_CHANGED)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                registerReceiver(callReceiver, filter, RECEIVER_EXPORTED)
-            } else {
-                @Suppress("UnspecifiedRegisterReceiverFlag")
-                registerReceiver(callReceiver, filter)
-            }
-            isReceiverRegistered = true
-            Log.d(TAG, "Call receiver registered successfully")
+            CallMonitorService.start(this)
+            Log.d(TAG, "Call monitor service started")
+            Toast.makeText(this, "📞 Call monitoring active", Toast.LENGTH_SHORT).show()
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to register call receiver", e)
+            Log.e(TAG, "Failed to start call monitor service", e)
+            Toast.makeText(this, "Failed to start call monitoring", Toast.LENGTH_SHORT).show()
         }
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        if (isReceiverRegistered) {
-            try {
-                unregisterReceiver(callReceiver)
-                isReceiverRegistered = false
-            } catch (e: Exception) {
-                Log.e(TAG, "Error unregistering receiver", e)
-            }
-        }
-        CallReceiver.onCallEnded = null
+        CallMonitorService.onCallEnded = null
+        // Note: We don't stop the service here so it continues monitoring
+        // User can manually stop it or it will stop when app is force-stopped
     }
 }
