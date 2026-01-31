@@ -20,11 +20,12 @@ import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.veivek.allday.MainActivity
-import com.veivek.allday.R
+import com.veivek.allday.ui.overlay.CallEndedOverlay
+import com.veivek.allday.utils.OverlayPermissionHelper
 
 /**
  * Foreground Service for reliable call state monitoring.
- * 
+ *
  * This is the recommended approach for Android 10+ because:
  * - BroadcastReceivers in the background are unreliable
  * - Foreground services have higher priority
@@ -48,7 +49,8 @@ class CallMonitorService : Service() {
         const val EXTRA_IS_INCOMING = "is_incoming"
 
         // Callback for in-app notification
-        var onCallEnded: ((phoneNumber: String?, contactName: String?, isIncoming: Boolean) -> Unit)? = null
+        var onCallEnded: ((phoneNumber: String?, contactName: String?, isIncoming: Boolean) -> Unit)? =
+            null
 
         fun start(context: Context) {
             val intent = Intent(context, CallMonitorService::class.java).apply {
@@ -92,6 +94,7 @@ class CallMonitorService : Service() {
                 startForeground(NOTIFICATION_ID, createNotification())
                 startMonitoring()
             }
+
             ACTION_STOP -> {
                 stopMonitoring()
                 stopForeground(STOP_FOREGROUND_REMOVE)
@@ -197,6 +200,7 @@ class CallMonitorService : Service() {
                 isIncoming = true
                 Log.d(TAG, "Phone ringing - incoming call")
             }
+
             TelephonyManager.CALL_STATE_OFFHOOK -> {
                 if (previousState == TelephonyManager.CALL_STATE_IDLE) {
                     isIncoming = false
@@ -205,6 +209,7 @@ class CallMonitorService : Service() {
                     Log.d(TAG, "Call answered")
                 }
             }
+
             TelephonyManager.CALL_STATE_IDLE -> {
                 if (previousState == TelephonyManager.CALL_STATE_OFFHOOK) {
                     Log.d(TAG, "Call ended! Triggering task creation")
@@ -222,13 +227,28 @@ class CallMonitorService : Service() {
         val phoneNumber = callInfo?.first ?: lastPhoneNumber
         val contactName = phoneNumber?.let { getContactName(it) }
 
-        Log.d(TAG, "Call ended - Number: $phoneNumber, Contact: $contactName, Incoming: $isIncoming")
+        Log.d(
+            TAG,
+            "Call ended - Number: $phoneNumber, Contact: $contactName, Incoming: $isIncoming"
+        )
 
         // Notify via callback (for when app is visible)
         onCallEnded?.invoke(phoneNumber, contactName, isIncoming)
 
-        // Also send a notification for when app is in background
-        showCallEndedNotification(phoneNumber, contactName, isIncoming)
+        // Show overlay window (Truecaller-style popup)
+        if (OverlayPermissionHelper.hasOverlayPermission(this)) {
+            try {
+                val overlay = CallEndedOverlay(applicationContext)
+                overlay.show(phoneNumber, contactName, isIncoming)
+                Log.d(TAG, "Overlay window shown")
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to show overlay, falling back to notification", e)
+                showCallEndedNotification(phoneNumber, contactName, isIncoming)
+            }
+        } else {
+            Log.w(TAG, "No overlay permission, showing notification instead")
+            showCallEndedNotification(phoneNumber, contactName, isIncoming)
+        }
 
         // Reset
         lastPhoneNumber = null
@@ -236,7 +256,8 @@ class CallMonitorService : Service() {
 
     private fun getLastCallInfo(): Pair<String?, Long>? {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CALL_LOG)
-            != PackageManager.PERMISSION_GRANTED) {
+            != PackageManager.PERMISSION_GRANTED
+        ) {
             Log.w(TAG, "No READ_CALL_LOG permission")
             return null
         }
@@ -266,7 +287,8 @@ class CallMonitorService : Service() {
 
     private fun getContactName(phoneNumber: String): String? {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS)
-            != PackageManager.PERMISSION_GRANTED) {
+            != PackageManager.PERMISSION_GRANTED
+        ) {
             return null
         }
 
@@ -288,7 +310,11 @@ class CallMonitorService : Service() {
         }
     }
 
-    private fun showCallEndedNotification(phoneNumber: String?, contactName: String?, isIncoming: Boolean) {
+    private fun showCallEndedNotification(
+        phoneNumber: String?,
+        contactName: String?,
+        isIncoming: Boolean,
+    ) {
         val displayName = contactName ?: phoneNumber ?: "Unknown"
         val callType = if (isIncoming) "incoming" else "outgoing"
 
