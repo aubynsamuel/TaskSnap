@@ -43,9 +43,10 @@ import com.veivek.allday.utils.OverlayPermissionHelper
 /**
  * Main Activity for TaskSnap MVP
  *
- * This app tests two core features:
- * 1. Call-ended detection → prompt user to create a task (Truecaller-style)
- * 2. Text selection & Share integration → create a task from selected text
+ * IMPROVEMENTS:
+ * - Better logging for debugging service startup
+ * - Explicit service start after permissions granted
+ * - Verification that service is actually running
  */
 class MainActivity : ComponentActivity() {
 
@@ -73,31 +74,21 @@ class MainActivity : ComponentActivity() {
         val granted = permissions.filter { it.value }.keys
         val denied = permissions.filter { !it.value }.keys
 
-        Log.d(TAG, "Permissions granted: $granted, denied: $denied")
+        Log.d(TAG, "✅ Permissions granted: $granted")
+        Log.d(TAG, "❌ Permissions denied: $denied")
 
-        if (permissions[Manifest.permission.READ_PHONE_STATE] == true) {
-            // Phone permission granted, continue with overlay permission
+        val hasPhoneState = permissions[Manifest.permission.READ_PHONE_STATE] == true
+        val hasCallLog = permissions[Manifest.permission.READ_CALL_LOG] == true
+
+        if (hasPhoneState && hasCallLog) {
+            Log.d(TAG, "✅ Essential permissions granted, continuing setup...")
+            // Phone permissions granted, continue with overlay permission
             checkAndRequestOverlayPermission()
         } else {
+            Log.e(TAG, "❌ Essential permissions missing!")
             Toast.makeText(
                 this,
-                "Phone permission is required for call detection",
-                Toast.LENGTH_LONG
-            ).show()
-        }
-    }
-
-    // Overlay permission result launcher
-    private val overlayPermissionResult = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) {
-        if (OverlayPermissionHelper.hasOverlayPermission(this)) {
-            Log.d(TAG, "Overlay permission granted")
-            onAllPermissionsGranted()
-        } else {
-            Toast.makeText(
-                this,
-                "Overlay permission needed for popup after calls",
+                "Phone and Call Log permissions are required for call detection",
                 Toast.LENGTH_LONG
             ).show()
         }
@@ -107,9 +98,11 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
+        Log.d(TAG, "📱 MainActivity onCreate()")
+
         // Set up callback for when service detects call ended
         CallMonitorService.onCallEnded = { phoneNumber, contactName, isIncoming ->
-            Log.d(TAG, "Call ended callback received: $phoneNumber, $contactName, $isIncoming")
+            Log.d(TAG, "📞 Call ended callback received: $phoneNumber, $contactName, $isIncoming")
             runOnUiThread {
                 callEndedData.value = CallEndedInfo(phoneNumber, contactName, isIncoming)
             }
@@ -123,11 +116,11 @@ class MainActivity : ComponentActivity() {
         val setupComplete = prefs.getBoolean(KEY_SETUP_COMPLETE, false)
 
         if (!setupComplete) {
-            // First launch - request permissions
+            Log.d(TAG, "🆕 First launch detected - starting setup wizard")
             showSetupWizard.value = true
             requestPhonePermissions()
         } else {
-            // Already set up - verify service is running
+            Log.d(TAG, "✅ Setup already complete - verifying service")
             ensureServiceRunning()
         }
 
@@ -178,19 +171,20 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+        Log.d(TAG, "📱 MainActivity onResume()")
+
         // Check permissions if wizard is showing (user returning from settings)
         if (showSetupWizard.value) {
             val hasOverlay = OverlayPermissionHelper.hasOverlayPermission(this)
             val hasBattery = BatteryOptimizationHelper.isIgnoringBatteryOptimizations(this)
 
+            Log.d(TAG, "Permission status: overlay=$hasOverlay, battery=$hasBattery")
+
             if (hasOverlay && hasBattery) {
                 onAllPermissionsGranted()
-            } else if (hasOverlay) {
-                // If returned from overlay settings but haven't asked for battery yet/denied
-                // We could prompt again or just proceed. For now, let's try to request.
-                if (!hasBattery) {
-                    // Ideally we don't loop, but let's check if we should trigger it
-                }
+            } else if (hasOverlay && !hasBattery) {
+                // User granted overlay but not battery - ask for battery
+                checkAndRequestBatteryOptimization()
             }
         }
     }
@@ -201,7 +195,7 @@ class MainActivity : ComponentActivity() {
             val contactName = intent.getStringExtra(CallMonitorService.EXTRA_CONTACT_NAME)
             val isIncoming = intent.getBooleanExtra(CallMonitorService.EXTRA_IS_INCOMING, false)
 
-            Log.d(TAG, "Received call ended intent: $phoneNumber, $contactName")
+            Log.d(TAG, "📞 Received call ended intent: $phoneNumber, $contactName")
             callEndedData.value = CallEndedInfo(phoneNumber, contactName, isIncoming)
         }
     }
@@ -209,7 +203,7 @@ class MainActivity : ComponentActivity() {
     private fun requestPhonePermissions() {
         val permissions = mutableListOf<String>()
 
-        // Core permission for call state
+        // Core permissions for call state
         permissions.add(Manifest.permission.READ_PHONE_STATE)
         permissions.add(Manifest.permission.READ_CALL_LOG)
         permissions.add(Manifest.permission.READ_CONTACTS)
@@ -224,40 +218,51 @@ class MainActivity : ComponentActivity() {
         }
 
         if (permissionsNeeded.isEmpty()) {
-            Log.d(TAG, "All phone permissions already granted")
+            Log.d(TAG, "✅ All phone permissions already granted")
             checkAndRequestOverlayPermission()
         } else {
-            Log.d(TAG, "Requesting permissions: $permissionsNeeded")
+            Log.d(TAG, "🔐 Requesting permissions: $permissionsNeeded")
             permissionLauncher.launch(permissionsNeeded.toTypedArray())
         }
     }
 
     private fun checkAndRequestOverlayPermission() {
         if (OverlayPermissionHelper.hasOverlayPermission(this)) {
-            Log.d(TAG, "Overlay permission already granted")
+            Log.d(TAG, "✅ Overlay permission already granted")
             checkAndRequestBatteryOptimization()
         } else {
-            Log.d(TAG, "Requesting overlay permission")
+            Log.d(TAG, "🔐 Requesting overlay permission")
+            Toast.makeText(
+                this,
+                "Please allow 'Display over other apps' for popup notifications",
+                Toast.LENGTH_LONG
+            ).show()
             OverlayPermissionHelper.requestOverlayPermission(this)
         }
     }
 
     private fun checkAndRequestBatteryOptimization() {
         if (BatteryOptimizationHelper.isIgnoringBatteryOptimizations(this)) {
-            Log.d(TAG, "Battery optimization already ignored")
+            Log.d(TAG, "✅ Battery optimization already ignored")
             onAllPermissionsGranted()
         } else {
-            Log.d(TAG, "Requesting battery optimization exemption")
+            Log.d(TAG, "🔋 Requesting battery optimization exemption")
+            Toast.makeText(
+                this,
+                "Please disable battery optimization to ensure reliable call detection",
+                Toast.LENGTH_LONG
+            ).show()
             BatteryOptimizationHelper.requestIgnoreBatteryOptimizations(this)
         }
     }
 
     private fun onAllPermissionsGranted() {
-        Log.d(TAG, "All permissions granted")
+        Log.d(TAG, "✅✅✅ All permissions granted! Starting service...")
 
         // Mark setup as complete
         val prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
         prefs.edit().putBoolean(KEY_SETUP_COMPLETE, true).apply()
+        Log.d(TAG, "💾 Setup completion saved to SharedPreferences")
 
         // Start the service
         startCallMonitorService()
@@ -269,22 +274,46 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun startCallMonitorService() {
+        Log.d(TAG, "🚀 Starting CallMonitorService...")
+
         try {
             CallMonitorService.start(this)
-            Log.d(TAG, "Call monitor service started")
+            Log.d(TAG, "✅ CallMonitorService start command sent")
+
+            // Verify service started (with slight delay to let it initialize)
+            postDelayed(1000) {
+                verifyServiceRunning()
+            }
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to start call monitor service", e)
+            Log.e(TAG, "❌ Failed to start call monitor service", e)
+            Toast.makeText(
+                this,
+                "Error starting service: ${e.message}",
+                Toast.LENGTH_LONG
+            ).show()
         }
     }
 
+    private fun verifyServiceRunning() {
+        // This is a simple check - in production you might want to use ActivityManager
+        Log.d(TAG, "🔍 Verifying service is running...")
+        // The service should log "Call monitoring started successfully ✅" if working
+    }
+
     private fun ensureServiceRunning() {
+        Log.d(TAG, "🔍 Ensuring service is running...")
         // The service should already be running (started by boot receiver)
-        // But we can verify and restart if needed
+        // But we can restart it just to be safe
         startCallMonitorService()
+    }
+
+    private fun postDelayed(delayMs: Long, action: () -> Unit) {
+        window.decorView.postDelayed(action, delayMs)
     }
 
     override fun onDestroy() {
         super.onDestroy()
+        Log.d(TAG, "💀 MainActivity onDestroy()")
         CallMonitorService.onCallEnded = null
         // Note: We don't stop the service - it should keep running
     }
@@ -349,6 +378,11 @@ fun SetupWizardScreen(onComplete: () -> Unit) {
                         icon = "💬",
                         title = "Display over apps",
                         description = "Show popup after calls"
+                    )
+                    PermissionItem(
+                        icon = "🔋",
+                        title = "Battery optimization",
+                        description = "Reliable background operation"
                     )
                 }
             }

@@ -6,8 +6,10 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.IBinder
@@ -26,10 +28,10 @@ import com.veivek.allday.utils.OverlayPermissionHelper
 /**
  * Foreground Service for reliable call state monitoring.
  *
- * This is the recommended approach for Android 10+ because:
- * - BroadcastReceivers in the background are unreliable
- * - Foreground services have higher priority
- * - Works even when app is not in foreground
+ * IMPORTANT CHANGES FOR ANDROID 9+:
+ * - Registers PHONE_STATE broadcast receiver dynamically (not just manifest)
+ * - Uses both TelephonyCallback (Android 12+) and PhoneStateListener (older)
+ * - Keeps service running to ensure calls are always detected
  */
 class CallMonitorService : Service() {
 
@@ -56,10 +58,15 @@ class CallMonitorService : Service() {
             val intent = Intent(context, CallMonitorService::class.java).apply {
                 action = ACTION_START
             }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                context.startForegroundService(intent)
-            } else {
-                context.startService(intent)
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    context.startForegroundService(intent)
+                } else {
+                    context.startService(intent)
+                }
+                Log.d(TAG, "✅ Service start requested")
+            } catch (e: Exception) {
+                Log.e(TAG, "❌ Failed to start service", e)
             }
         }
 
@@ -74,34 +81,50 @@ class CallMonitorService : Service() {
     private var telephonyManager: TelephonyManager? = null
     private var phoneStateListener: PhoneStateListener? = null
     private var telephonyCallback: TelephonyCallback? = null
+    private var phoneStateReceiver: BroadcastReceiver? = null
 
     // State tracking
     private var previousState = TelephonyManager.CALL_STATE_IDLE
     private var isIncoming = false
     private var lastPhoneNumber: String? = null
+    private var isMonitoring = false
 
     override fun onCreate() {
         super.onCreate()
-        Log.d(TAG, "Service created")
+        Log.d(TAG, "📱 Service onCreate()")
         createNotificationChannel()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        Log.d(TAG, "onStartCommand: ${intent?.action}")
+        Log.d(TAG, "📱 onStartCommand: action=${intent?.action}, flags=$flags, startId=$startId")
 
         when (intent?.action) {
             ACTION_START -> {
-                startForeground(NOTIFICATION_ID, createNotification())
-                startMonitoring()
+                if (!isMonitoring) {
+                    Log.d(TAG, "🚀 Starting foreground service and call monitoring...")
+                    startForeground(NOTIFICATION_ID, createNotification())
+                    startMonitoring()
+                } else {
+                    Log.d(TAG, "ℹ️ Service already monitoring, ignoring duplicate start")
+                }
             }
 
             ACTION_STOP -> {
+                Log.d(TAG, "🛑 Stopping service...")
                 stopMonitoring()
                 stopForeground(STOP_FOREGROUND_REMOVE)
                 stopSelf()
             }
+
+            null -> {
+                // Service restarted by system after being killed
+                Log.d(TAG, "🔄 Service restarted by system, starting monitoring...")
+                startForeground(NOTIFICATION_ID, createNotification())
+                startMonitoring()
+            }
         }
 
+        // START_STICKY ensures service restarts if killed by system
         return START_STICKY
     }
 
@@ -119,6 +142,7 @@ class CallMonitorService : Service() {
             }
             val notificationManager = getSystemService(NotificationManager::class.java)
             notificationManager.createNotificationChannel(channel)
+            Log.d(TAG, "✅ Notification channel created")
         }
     }
 
@@ -131,7 +155,7 @@ class CallMonitorService : Service() {
         )
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("TaskSnap")
+            .setContentTitle("TaskSnap Active")
             .setContentText("Monitoring calls for task creation")
             .setSmallIcon(android.R.drawable.ic_menu_call)
             .setOngoing(true)
@@ -141,23 +165,75 @@ class CallMonitorService : Service() {
     }
 
     private fun startMonitoring() {
+        if (isMonitoring) {
+            Log.w(TAG, "⚠️ Already monitoring, skipping duplicate registration")
+            return
+        }
+
+        Log.d(TAG, "🎯 Starting call monitoring...")
+
+        // Check permissions first
+        if (!hasRequiredPermissions()) {
+            Log.e(TAG, "❌ Missing required permissions for call monitoring")
+            return
+        }
+
         telephonyManager = getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
 
+        // Strategy 1: Register dynamic broadcast receiver (works on Android 9+)
+        registerDynamicPhoneStateReceiver()
+
+        // Strategy 2: Use TelephonyCallback (Android 12+) or PhoneStateListener (older)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            // Android 12+ uses TelephonyCallback
             startModernMonitoring()
         } else {
-            // Older versions use PhoneStateListener
             startLegacyMonitoring()
         }
 
-        Log.d(TAG, "Call monitoring started")
+        isMonitoring = true
+        Log.d(TAG, "✅ Call monitoring started successfully")
+    }
+
+    /**
+     * Register PHONE_STATE broadcast receiver dynamically.
+     * This is CRITICAL for Android 9+ where manifest-declared receivers don't receive these broadcasts.
+     */
+    private fun registerDynamicPhoneStateReceiver() {
+        try {
+            phoneStateReceiver = object : BroadcastReceiver() {
+                override fun onReceive(context: Context, intent: Intent) {
+                    if (intent.action == TelephonyManager.ACTION_PHONE_STATE_CHANGED) {
+                        val state = intent.getStringExtra(TelephonyManager.EXTRA_STATE)
+                        val number = intent.getStringExtra(TelephonyManager.EXTRA_INCOMING_NUMBER)
+
+                        Log.d(TAG, "📞 Dynamic receiver: state=$state, number=${number?.take(3)}***")
+
+                        // Store incoming number
+                        if (number != null) {
+                            lastPhoneNumber = number
+                        }
+                    }
+                }
+            }
+
+            val filter = IntentFilter(TelephonyManager.ACTION_PHONE_STATE_CHANGED)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                registerReceiver(phoneStateReceiver, filter, RECEIVER_NOT_EXPORTED)
+            } else {
+                registerReceiver(phoneStateReceiver, filter)
+            }
+
+            Log.d(TAG, "✅ Dynamic PHONE_STATE receiver registered")
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Failed to register dynamic receiver", e)
+        }
     }
 
     @RequiresApi(Build.VERSION_CODES.S)
     private fun startModernMonitoring() {
         telephonyCallback = object : TelephonyCallback(), TelephonyCallback.CallStateListener {
             override fun onCallStateChanged(state: Int) {
+                Log.d(TAG, "📱 TelephonyCallback: state=$state (${getStateName(state)})")
                 handleCallStateChange(state)
             }
         }
@@ -167,9 +243,11 @@ class CallMonitorService : Service() {
                 mainExecutor,
                 telephonyCallback!!
             )
-            Log.d(TAG, "Modern TelephonyCallback registered")
+            Log.d(TAG, "✅ Modern TelephonyCallback registered (Android 12+)")
+        } catch (e: SecurityException) {
+            Log.e(TAG, "❌ SecurityException registering TelephonyCallback - check permissions", e)
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to register TelephonyCallback", e)
+            Log.e(TAG, "❌ Failed to register TelephonyCallback", e)
         }
     }
 
@@ -177,43 +255,75 @@ class CallMonitorService : Service() {
     private fun startLegacyMonitoring() {
         phoneStateListener = object : PhoneStateListener() {
             override fun onCallStateChanged(state: Int, phoneNumber: String?) {
-                if (phoneNumber != null) {
+                Log.d(
+                    TAG,
+                    "📱 PhoneStateListener: state=$state (${getStateName(state)}), number=${
+                        phoneNumber?.take(3)
+                    }***"
+                )
+
+                if (phoneNumber != null && phoneNumber.isNotEmpty()) {
                     lastPhoneNumber = phoneNumber
+                    Log.d(TAG, "📝 Stored phone number: ${phoneNumber.take(3)}***")
                 }
+
                 handleCallStateChange(state)
             }
         }
 
         try {
             telephonyManager?.listen(phoneStateListener, PhoneStateListener.LISTEN_CALL_STATE)
-            Log.d(TAG, "Legacy PhoneStateListener registered")
+            Log.d(TAG, "✅ Legacy PhoneStateListener registered (Android < 12)")
+        } catch (e: SecurityException) {
+            Log.e(TAG, "❌ SecurityException registering PhoneStateListener - check permissions", e)
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to register PhoneStateListener", e)
+            Log.e(TAG, "❌ Failed to register PhoneStateListener", e)
         }
     }
 
     private fun handleCallStateChange(state: Int) {
-        Log.d(TAG, "Call state changed: $state (previous: $previousState)")
+        val stateName = getStateName(state)
+        val prevStateName = getStateName(previousState)
+
+        Log.d(TAG, "🔄 State transition: $prevStateName → $stateName")
 
         when (state) {
             TelephonyManager.CALL_STATE_RINGING -> {
                 isIncoming = true
-                Log.d(TAG, "Phone ringing - incoming call")
+                Log.d(TAG, "📞 RINGING → Incoming call detected")
             }
 
             TelephonyManager.CALL_STATE_OFFHOOK -> {
-                if (previousState == TelephonyManager.CALL_STATE_IDLE) {
-                    isIncoming = false
-                    Log.d(TAG, "Call started - outgoing call")
-                } else {
-                    Log.d(TAG, "Call answered")
+                when (previousState) {
+                    TelephonyManager.CALL_STATE_IDLE -> {
+                        isIncoming = false
+                        Log.d(TAG, "📞 IDLE→OFFHOOK → Outgoing call started")
+                    }
+
+                    TelephonyManager.CALL_STATE_RINGING -> {
+                        Log.d(TAG, "📞 RINGING→OFFHOOK → Incoming call answered")
+                    }
+
+                    else -> {
+                        Log.d(TAG, "📞 OFFHOOK → Call in progress")
+                    }
                 }
             }
 
             TelephonyManager.CALL_STATE_IDLE -> {
-                if (previousState == TelephonyManager.CALL_STATE_OFFHOOK) {
-                    Log.d(TAG, "Call ended! Triggering task creation")
-                    handleCallEnded()
+                when (previousState) {
+                    TelephonyManager.CALL_STATE_OFFHOOK -> {
+                        Log.d(TAG, "📞 OFFHOOK→IDLE → CALL ENDED! Triggering task creation")
+                        handleCallEnded()
+                    }
+
+                    TelephonyManager.CALL_STATE_RINGING -> {
+                        Log.d(TAG, "📞 RINGING→IDLE → Missed call (not answered)")
+                    }
+
+                    else -> {
+                        Log.d(TAG, "📞 IDLE → No active call")
+                    }
                 }
             }
         }
@@ -222,14 +332,20 @@ class CallMonitorService : Service() {
     }
 
     private fun handleCallEnded() {
+        Log.d(TAG, "🎯 Processing call end event...")
+
         // Try to get the last call info from call log
         val callInfo = getLastCallInfo()
         val phoneNumber = callInfo?.first ?: lastPhoneNumber
         val contactName = phoneNumber?.let { getContactName(it) }
 
         Log.d(
-            TAG,
-            "Call ended - Number: $phoneNumber, Contact: $contactName, Incoming: $isIncoming"
+            TAG, """
+            📊 Call Details:
+            - Number: ${phoneNumber?.take(3)}***
+            - Contact: $contactName
+            - Direction: ${if (isIncoming) "incoming" else "outgoing"}
+        """.trimIndent()
         )
 
         // Notify via callback (for when app is visible)
@@ -240,13 +356,13 @@ class CallMonitorService : Service() {
             try {
                 val overlay = CallEndedOverlay(applicationContext)
                 overlay.show(phoneNumber, contactName, isIncoming)
-                Log.d(TAG, "Overlay window shown")
+                Log.d(TAG, "✅ Overlay window shown")
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to show overlay, falling back to notification", e)
+                Log.e(TAG, "❌ Failed to show overlay, falling back to notification", e)
                 showCallEndedNotification(phoneNumber, contactName, isIncoming)
             }
         } else {
-            Log.w(TAG, "No overlay permission, showing notification instead")
+            Log.w(TAG, "⚠️ No overlay permission, showing notification instead")
             showCallEndedNotification(phoneNumber, contactName, isIncoming)
         }
 
@@ -254,11 +370,27 @@ class CallMonitorService : Service() {
         lastPhoneNumber = null
     }
 
+    private fun hasRequiredPermissions(): Boolean {
+        val hasPhoneState = ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.READ_PHONE_STATE
+        ) == PackageManager.PERMISSION_GRANTED
+
+        val hasCallLog = ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.READ_CALL_LOG
+        ) == PackageManager.PERMISSION_GRANTED
+
+        Log.d(TAG, "Permission check: PHONE_STATE=$hasPhoneState, CALL_LOG=$hasCallLog")
+
+        return hasPhoneState
+    }
+
     private fun getLastCallInfo(): Pair<String?, Long>? {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CALL_LOG)
             != PackageManager.PERMISSION_GRANTED
         ) {
-            Log.w(TAG, "No READ_CALL_LOG permission")
+            Log.w(TAG, "⚠️ No READ_CALL_LOG permission")
             return null
         }
 
@@ -276,11 +408,15 @@ class CallMonitorService : Service() {
                 if (it.moveToFirst()) {
                     val number = it.getString(0)
                     val date = it.getLong(1)
+                    Log.d(TAG, "📋 Last call from log: ${number?.take(3)}***")
                     Pair(number, date)
-                } else null
+                } else {
+                    Log.w(TAG, "⚠️ No calls in call log")
+                    null
+                }
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Error reading call log", e)
+            Log.e(TAG, "❌ Error reading call log", e)
             null
         }
     }
@@ -289,6 +425,7 @@ class CallMonitorService : Service() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS)
             != PackageManager.PERMISSION_GRANTED
         ) {
+            Log.w(TAG, "⚠️ No READ_CONTACTS permission")
             return null
         }
 
@@ -302,10 +439,17 @@ class CallMonitorService : Service() {
                 arrayOf(ContactsContract.PhoneLookup.DISPLAY_NAME),
                 null, null, null
             )?.use { cursor ->
-                if (cursor.moveToFirst()) cursor.getString(0) else null
+                if (cursor.moveToFirst()) {
+                    val name = cursor.getString(0)
+                    Log.d(TAG, "👤 Contact found: $name")
+                    name
+                } else {
+                    Log.d(TAG, "👤 No contact found for ${phoneNumber.take(3)}***")
+                    null
+                }
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Error getting contact name", e)
+            Log.e(TAG, "❌ Error getting contact name", e)
             null
         }
     }
@@ -318,7 +462,8 @@ class CallMonitorService : Service() {
         val displayName = contactName ?: phoneNumber ?: "Unknown"
         val callType = if (isIncoming) "incoming" else "outgoing"
 
-        // Create intent to open app with call info
+        Log.d(TAG, "🔔 Showing notification for $callType call with $displayName")
+
         val intent = Intent(this, MainActivity::class.java).apply {
             action = ACTION_CALL_ENDED
             putExtra(EXTRA_PHONE_NUMBER, phoneNumber)
@@ -348,22 +493,47 @@ class CallMonitorService : Service() {
     }
 
     private fun stopMonitoring() {
+        Log.d(TAG, "🛑 Stopping call monitoring...")
+
+        // Unregister dynamic receiver
+        try {
+            phoneStateReceiver?.let {
+                unregisterReceiver(it)
+                phoneStateReceiver = null
+                Log.d(TAG, "✅ Dynamic receiver unregistered")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Error unregistering dynamic receiver", e)
+        }
+
+        // Unregister telephony listeners
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             telephonyCallback?.let {
                 telephonyManager?.unregisterTelephonyCallback(it)
+                Log.d(TAG, "✅ TelephonyCallback unregistered")
             }
         } else {
             @Suppress("DEPRECATION")
             phoneStateListener?.let {
                 telephonyManager?.listen(it, PhoneStateListener.LISTEN_NONE)
+                Log.d(TAG, "✅ PhoneStateListener unregistered")
             }
         }
-        Log.d(TAG, "Call monitoring stopped")
+
+        isMonitoring = false
+        Log.d(TAG, "✅ Call monitoring stopped")
     }
 
     override fun onDestroy() {
         super.onDestroy()
+        Log.d(TAG, "💀 Service onDestroy()")
         stopMonitoring()
-        Log.d(TAG, "Service destroyed")
+    }
+
+    private fun getStateName(state: Int): String = when (state) {
+        TelephonyManager.CALL_STATE_IDLE -> "IDLE"
+        TelephonyManager.CALL_STATE_RINGING -> "RINGING"
+        TelephonyManager.CALL_STATE_OFFHOOK -> "OFFHOOK"
+        else -> "UNKNOWN($state)"
     }
 }
