@@ -1,4 +1,4 @@
-package com.veivek.allday.service
+package com.veivek.taskSnap.service
 
 import android.Manifest
 import android.app.Notification
@@ -21,9 +21,9 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
-import com.veivek.allday.MainActivity
-import com.veivek.allday.ui.overlay.CallEndedOverlay
-import com.veivek.allday.utils.OverlayPermissionHelper
+import com.veivek.taskSnap.MainActivity
+import com.veivek.taskSnap.ui.overlay.CallEndedOverlay
+import com.veivek.taskSnap.utils.OverlayPermissionHelper
 
 /**
  * Foreground Service for reliable call state monitoring.

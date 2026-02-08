@@ -1,4 +1,4 @@
-package com.veivek.allday.ui.theme
+package com.veivek.taskSnap.ui.theme
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme

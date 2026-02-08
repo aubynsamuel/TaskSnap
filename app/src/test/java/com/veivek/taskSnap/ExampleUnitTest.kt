@@ -1,4 +1,4 @@
-package com.veivek.allday
+package com.veivek.taskSnap
 
 import org.junit.Assert.assertEquals
 import org.junit.Test

@@ -1,10 +1,10 @@
-package com.veivek.allday.receiver
+package com.veivek.taskSnap.receiver
 
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.util.Log
-import com.veivek.allday.service.CallMonitorService
+import com.veivek.taskSnap.service.CallMonitorService
 
 /**
  * Boot Receiver - Automatically starts call monitoring service when device boots.

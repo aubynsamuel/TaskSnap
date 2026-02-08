@@ -1,4 +1,4 @@
-package com.veivek.allday.data
+package com.veivek.taskSnap.data
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

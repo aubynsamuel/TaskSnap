@@ -19,6 +19,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "All Day"
+rootProject.name = "Task Snap"
 include(":app")
 include(":baselineprofile")

@@ -5,16 +5,18 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.baselineprofile)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
-    namespace = "com.veivek.allday"
+    namespace = "com.veivek.taskSnap"
     compileSdk {
         version = release(36)
     }
 
     defaultConfig {
-        applicationId = "com.veivek.allday"
+        applicationId = "com.veivek.taskSnap"
         minSdk = 26
         targetSdk = 36
         versionCode = 1
@@ -49,7 +51,22 @@ android {
 }
 
 dependencies {
+    // Navigation 3 Compose
+    implementation(libs.androidx.navigation3.ui)
+    implementation(libs.androidx.navigation3.runtime)
+    implementation(libs.androidx.lifecycle.viewmodel.navigation3)
+
+    // Room Database
+    implementation(libs.androidx.room.runtime)
+    ksp(libs.room.compiler)
+    implementation(libs.androidx.room.ktx)
+
+    // Kotlin Serialization
+    implementation(libs.kotlinx.serialization.json)
+
+    // Material Icons
     implementation(libs.androidx.compose.material.icons.extended)
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)

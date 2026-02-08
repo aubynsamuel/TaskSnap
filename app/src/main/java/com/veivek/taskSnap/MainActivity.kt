@@ -1,4 +1,4 @@
-package com.veivek.allday
+package com.veivek.taskSnap
 
 import android.Manifest
 import android.content.Intent
@@ -32,13 +32,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
-import com.veivek.allday.service.CallMonitorService
-import com.veivek.allday.ui.components.AddTaskDialog
-import com.veivek.allday.ui.components.CallEndedDialog
-import com.veivek.allday.ui.screens.TaskListScreen
-import com.veivek.allday.ui.theme.AllDayTheme
-import com.veivek.allday.utils.BatteryOptimizationHelper
-import com.veivek.allday.utils.OverlayPermissionHelper
+import com.veivek.taskSnap.service.CallMonitorService
+import com.veivek.taskSnap.ui.components.AddTaskDialog
+import com.veivek.taskSnap.ui.components.CallEndedDialog
+import com.veivek.taskSnap.ui.screens.TaskListScreen
+import com.veivek.taskSnap.ui.theme.AllDayTheme
+import com.veivek.taskSnap.utils.BatteryOptimizationHelper
+import com.veivek.taskSnap.utils.OverlayPermissionHelper
 
 /**
  * Main Activity for TaskSnap MVP

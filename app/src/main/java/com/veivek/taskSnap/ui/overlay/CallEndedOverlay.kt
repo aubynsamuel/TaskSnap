@@ -1,4 +1,4 @@
-package com.veivek.allday.ui.overlay
+package com.veivek.taskSnap.ui.overlay
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -43,9 +43,9 @@ import androidx.savedstate.SavedStateRegistry
 import androidx.savedstate.SavedStateRegistryController
 import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
-import com.veivek.allday.data.TaskRepository
-import com.veivek.allday.data.TaskSource
-import com.veivek.allday.ui.theme.AllDayTheme
+import com.veivek.taskSnap.data.TaskRepository
+import com.veivek.taskSnap.data.TaskSource
+import com.veivek.taskSnap.ui.theme.AllDayTheme
 
 /**
  * Floating overlay window that appears after a call ends.

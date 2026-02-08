@@ -1,4 +1,4 @@
-package com.veivek.allday.utils
+package com.veivek.taskSnap.utils
 
 import android.content.Context
 import android.content.Intent
