@@ -32,11 +32,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import com.veivek.taskSnap.data.local.TaskDatabase
+import com.veivek.taskSnap.presentation.navigation.Navigation
 import com.veivek.taskSnap.service.CallMonitorService
-import com.veivek.taskSnap.ui.components.AddTaskDialog
 import com.veivek.taskSnap.ui.components.CallEndedDialog
-import com.veivek.taskSnap.ui.screens.TaskListScreen
-import com.veivek.taskSnap.ui.theme.AllDayTheme
+import com.veivek.taskSnap.ui.theme.TaskSnapTheme
 import com.veivek.taskSnap.utils.BatteryOptimizationHelper
 import com.veivek.taskSnap.utils.OverlayPermissionHelper
 
@@ -57,7 +57,6 @@ class MainActivity : ComponentActivity() {
     }
 
     // State for dialogs
-    private var showAddTaskDialog = mutableStateOf(false)
     private var callEndedData = mutableStateOf<CallEndedInfo?>(null)
     private var showSetupWizard = mutableStateOf(false)
 
@@ -125,9 +124,7 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            AllDayTheme {
-                val showAddDialog by showAddTaskDialog
-                val callEnded by callEndedData
+            TaskSnapTheme {
                 val showWizard by showSetupWizard
 
                 if (showWizard) {
@@ -137,28 +134,20 @@ class MainActivity : ComponentActivity() {
                         }
                     )
                 } else {
-                    TaskListScreen(
-                        onAddTaskClick = { showAddTaskDialog.value = true }
+                    // Initialize database and navigation
+                    val database = TaskDatabase.getInstance(this)
+                    Navigation(database = database)
+                }
+
+                // Call ended dialog (fallback if overlay not shown)
+                val callEnded by callEndedData
+                callEnded?.let { info ->
+                    CallEndedDialog(
+                        phoneNumber = info.phoneNumber,
+                        contactName = info.contactName,
+                        isIncoming = info.isIncoming,
+                        onDismiss = { callEndedData.value = null }
                     )
-
-                    // Manual add task dialog
-                    if (showAddDialog) {
-                        AddTaskDialog(
-                            onDismiss = { showAddTaskDialog.value = false }
-                        )
-                    }
-
-                    // Call ended dialog (backup if overlay permission not granted)
-                    callEnded?.let { info ->
-                        if (!OverlayPermissionHelper.hasOverlayPermission(this)) {
-                            CallEndedDialog(
-                                phoneNumber = info.phoneNumber,
-                                contactName = info.contactName,
-                                isIncoming = info.isIncoming,
-                                onDismiss = { callEndedData.value = null }
-                            )
-                        }
-                    }
                 }
             }
         }

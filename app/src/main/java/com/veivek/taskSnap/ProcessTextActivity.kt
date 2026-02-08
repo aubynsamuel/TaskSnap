@@ -32,12 +32,12 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.veivek.taskSnap.data.TaskRepository
 import com.veivek.taskSnap.data.TaskSource
-import com.veivek.taskSnap.ui.theme.AllDayTheme
+import com.veivek.taskSnap.ui.theme.TaskSnapTheme
 
 /**
  * Activity that handles ACTION_PROCESS_TEXT and ACTION_SEND intents.
  * This is the core of Feature 2: Text Selection & Share Integration
- * 
+ *
  * Technical Notes:
  * - ACTION_PROCESS_TEXT: Appears in the text selection menu (Android 6+)
  * - ACTION_SEND: Appears in the share sheet
@@ -63,7 +63,7 @@ class ProcessTextActivity : ComponentActivity() {
         Log.d(TAG, "Received text: $text from source: $source")
 
         setContent {
-            AllDayTheme {
+            TaskSnapTheme {
                 QuickTaskDialog(
                     initialText = text,
                     source = source,
@@ -94,10 +94,12 @@ class ProcessTextActivity : ComponentActivity() {
                     intent.type?.startsWith("text/") == true -> {
                         intent.getStringExtra(Intent.EXTRA_TEXT)
                     }
+
                     else -> null
                 }
                 Pair(text, TaskSource.SHARE_INTENT)
             }
+
             else -> Pair(null, TaskSource.MANUAL)
         }
     }
@@ -108,11 +110,11 @@ fun QuickTaskDialog(
     initialText: String,
     source: TaskSource,
     onDismiss: () -> Unit,
-    onSave: (title: String, description: String) -> Unit
+    onSave: (title: String, description: String) -> Unit,
 ) {
     var title by remember { mutableStateOf(initialText.take(100)) } // Limit title length
-    var description by remember { 
-        mutableStateOf(if (initialText.length > 100) initialText else "") 
+    var description by remember {
+        mutableStateOf(if (initialText.length > 100) initialText else "")
     }
 
     Dialog(

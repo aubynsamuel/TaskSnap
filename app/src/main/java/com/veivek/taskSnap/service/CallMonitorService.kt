@@ -89,6 +89,11 @@ class CallMonitorService : Service() {
     private var lastPhoneNumber: String? = null
     private var isMonitoring = false
 
+    // Call duration tracking
+    private var callStartTime: Long = 0
+    private var callAnsweredTime: Long = 0
+    private val MIN_CALL_DURATION_MS = 3000 // Only show overlay for calls longer than 3 seconds
+
     override fun onCreate() {
         super.onCreate()
         Log.d(TAG, "📱 Service onCreate()")
@@ -296,12 +301,19 @@ class CallMonitorService : Service() {
             TelephonyManager.CALL_STATE_OFFHOOK -> {
                 when (previousState) {
                     TelephonyManager.CALL_STATE_IDLE -> {
+                        // Outgoing call started
                         isIncoming = false
-                        Log.d(TAG, "📞 IDLE→OFFHOOK → Outgoing call started")
+                        callStartTime = System.currentTimeMillis()
+                        Log.d(TAG, "📞 IDLE→OFFHOOK → Outgoing call started at $callStartTime")
                     }
 
                     TelephonyManager.CALL_STATE_RINGING -> {
-                        Log.d(TAG, "📞 RINGING→OFFHOOK → Incoming call answered")
+                        // Incoming call was answered
+                        callAnsweredTime = System.currentTimeMillis()
+                        Log.d(
+                            TAG,
+                            "📞 RINGING→OFFHOOK → Incoming call answered at $callAnsweredTime"
+                        )
                     }
 
                     else -> {
@@ -313,12 +325,34 @@ class CallMonitorService : Service() {
             TelephonyManager.CALL_STATE_IDLE -> {
                 when (previousState) {
                     TelephonyManager.CALL_STATE_OFFHOOK -> {
-                        Log.d(TAG, "📞 OFFHOOK→IDLE → CALL ENDED! Triggering task creation")
-                        handleCallEnded()
+                        // Call ended - check if it was answered and duration
+                        val callDuration =
+                            System.currentTimeMillis() - maxOf(callStartTime, callAnsweredTime)
+                        val wasAnswered = callAnsweredTime > 0 || callStartTime > 0
+
+                        Log.d(
+                            TAG,
+                            "📞 OFFHOOK→IDLE → Call ended. Duration: ${callDuration}ms, Answered: $wasAnswered"
+                        )
+
+                        // Only trigger overlay for answered calls with minimum duration
+                        if (wasAnswered && callDuration >= MIN_CALL_DURATION_MS) {
+                            Log.d(TAG, "✅ Call qualifies for task creation prompt")
+                            handleCallEnded()
+                        } else {
+                            Log.d(TAG, "⏭️ Skipping overlay - call too short or not answered")
+                        }
+
+                        // Reset call tracking
+                        callStartTime = 0
+                        callAnsweredTime = 0
                     }
 
                     TelephonyManager.CALL_STATE_RINGING -> {
-                        Log.d(TAG, "📞 RINGING→IDLE → Missed call (not answered)")
+                        Log.d(TAG, "📞 RINGING→IDLE → Missed call (not answered) - NO OVERLAY")
+                        // Reset tracking
+                        callStartTime = 0
+                        callAnsweredTime = 0
                     }
 
                     else -> {
@@ -334,9 +368,9 @@ class CallMonitorService : Service() {
     private fun handleCallEnded() {
         Log.d(TAG, "🎯 Processing call end event...")
 
-        // Try to get the last call info from call log
-        val callInfo = getLastCallInfo()
-        val phoneNumber = callInfo?.first ?: lastPhoneNumber
+        // Use the tracked phone number instead of querying call log
+        // This ensures we get the CURRENT call, not the last call in the log
+        val phoneNumber = lastPhoneNumber
         val contactName = phoneNumber?.let { getContactName(it) }
 
         Log.d(

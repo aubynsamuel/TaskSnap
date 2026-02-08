@@ -45,7 +45,7 @@ import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.veivek.taskSnap.data.TaskRepository
 import com.veivek.taskSnap.data.TaskSource
-import com.veivek.taskSnap.ui.theme.AllDayTheme
+import com.veivek.taskSnap.ui.theme.TaskSnapTheme
 
 /**
  * Floating overlay window that appears after a call ends.
@@ -84,7 +84,7 @@ class CallEndedOverlay(private val context: Context) {
                 setViewTreeSavedStateRegistryOwner(lifecycleOwner)
 
                 setContent {
-                    AllDayTheme {
+                    TaskSnapTheme {
                         CallEndedOverlayContent(
                             displayName = displayName,
                             phoneNumber = phoneNumber,

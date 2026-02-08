@@ -15,3 +15,7 @@
 local.properties
 .idea
 .kotlin
+app/google-services.json
+.env*
+.vscode
+keystore
