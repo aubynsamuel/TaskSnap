@@ -13,9 +13,9 @@ import androidx.navigation3.ui.NavDisplay
 import com.veivek.taskSnap.data.local.TaskDatabase
 import com.veivek.taskSnap.data.repository.TaskRepositoryImpl
 import com.veivek.taskSnap.domain.repository.TaskRepository
-import com.veivek.taskSnap.presentation.matrix.EisenhowerMatrixScreen
-import com.veivek.taskSnap.presentation.matrix.TaskViewModel
-import com.veivek.taskSnap.presentation.quadrant.QuadrantDetailScreen
+import com.veivek.taskSnap.presentation.screens.EisenhowerMatrixScreen
+import com.veivek.taskSnap.presentation.screens.QuadrantDetailScreen
+import com.veivek.taskSnap.presentation.viewmodel.TaskViewModel
 
 /**
  * Main navigation component for TaskSnap.

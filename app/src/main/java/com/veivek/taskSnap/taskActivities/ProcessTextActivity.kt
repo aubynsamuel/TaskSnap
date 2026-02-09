@@ -34,7 +34,7 @@ class ProcessTextActivity : ComponentActivity() {
 
     private val coroutineScope = CoroutineScope(SupervisorJob())
 
-    val database = TaskDatabase.Companion.getInstance(this)
+    val database = TaskDatabase.getInstance(this)
     val repository: TaskRepository = TaskRepositoryImpl(database.taskDao())
 
     override fun onCreate(savedInstanceState: Bundle?) {

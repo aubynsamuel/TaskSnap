@@ -1,4 +1,4 @@
-package com.veivek.taskSnap.presentation.matrix
+package com.veivek.taskSnap.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

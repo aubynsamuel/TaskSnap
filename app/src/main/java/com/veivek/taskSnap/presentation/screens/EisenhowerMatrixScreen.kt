@@ -1,4 +1,4 @@
-package com.veivek.taskSnap.presentation.matrix
+package com.veivek.taskSnap.presentation.screens
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
@@ -68,6 +68,8 @@ import com.veivek.taskSnap.presentation.theme.Q3Secondary
 import com.veivek.taskSnap.presentation.theme.Q4Container
 import com.veivek.taskSnap.presentation.theme.Q4Primary
 import com.veivek.taskSnap.presentation.theme.Q4Secondary
+import com.veivek.taskSnap.presentation.viewmodel.MatrixUiState
+import com.veivek.taskSnap.presentation.viewmodel.TaskViewModel
 
 /**
  * Eisenhower Matrix Screen - Main screen showing 4-quadrant grid.

@@ -11,30 +11,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Card
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.veivek.taskSnap.data.local.TaskDatabase
 import com.veivek.taskSnap.data.service.CallMonitorService
 import com.veivek.taskSnap.presentation.components.CallEndedDialog
+import com.veivek.taskSnap.presentation.components.SetupWizardScreen
 import com.veivek.taskSnap.presentation.navigation.Navigation
 import com.veivek.taskSnap.presentation.theme.TaskSnapTheme
 import com.veivek.taskSnap.presentation.utils.BatteryOptimizationHelper
@@ -305,103 +288,5 @@ class MainActivity : ComponentActivity() {
         Log.d(TAG, "💀 MainActivity onDestroy()")
         CallMonitorService.onCallEnded = null
         // Note: We don't stop the service - it should keep running
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun SetupWizardScreen(onComplete: () -> Unit) {
-    Scaffold(
-        topBar = {
-            TopAppBar(title = { Text("TaskSnap Setup") })
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Spacer(modifier = Modifier.height(32.dp))
-
-            Text(
-                text = "📞",
-                style = MaterialTheme.typography.displayLarge
-            )
-
-            Text(
-                text = "Welcome to TaskSnap",
-                style = MaterialTheme.typography.headlineMedium
-            )
-
-            Text(
-                text = "To work like Truecaller, TaskSnap needs a few permissions:",
-                style = MaterialTheme.typography.bodyLarge
-            )
-
-            Card(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    PermissionItem(
-                        icon = "📞",
-                        title = "Phone",
-                        description = "Detect when calls end"
-                    )
-                    PermissionItem(
-                        icon = "👤",
-                        title = "Contacts",
-                        description = "Show who you called"
-                    )
-                    PermissionItem(
-                        icon = "🔔",
-                        title = "Notifications",
-                        description = "Background monitoring"
-                    )
-                    PermissionItem(
-                        icon = "💬",
-                        title = "Display over apps",
-                        description = "Show popup after calls"
-                    )
-                    PermissionItem(
-                        icon = "🔋",
-                        title = "Battery optimization",
-                        description = "Reliable background operation"
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.weight(1f))
-
-            Text(
-                text = "The app will start automatically after setup",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    }
-}
-
-@Composable
-fun PermissionItem(icon: String, title: String, description: String) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(text = icon, style = MaterialTheme.typography.headlineMedium)
-        Column {
-            Text(text = title, style = MaterialTheme.typography.titleMedium)
-            Text(
-                text = description,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
     }
 }
