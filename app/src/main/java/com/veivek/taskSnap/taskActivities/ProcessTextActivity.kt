@@ -5,17 +5,18 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import com.veivek.taskSnap.data.local.TaskDatabase
-import com.veivek.taskSnap.data.repository.TaskRepositoryImpl
 import com.veivek.taskSnap.domain.model.Task
 import com.veivek.taskSnap.domain.model.TaskSource
 import com.veivek.taskSnap.domain.repository.TaskRepository
 import com.veivek.taskSnap.presentation.components.EnhancedAddTaskDialog
 import com.veivek.taskSnap.presentation.theme.TaskSnapTheme
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import java.util.UUID
+import javax.inject.Inject
+
 
 /**
  * Activity that handles ACTION_PROCESS_TEXT and ACTION_SEND intents.
@@ -26,6 +27,7 @@ import java.util.UUID
  * - ACTION_SEND: Appears in the share sheet
  * - Uses a transparent theme to show as a dialog
  */
+@AndroidEntryPoint
 class ProcessTextActivity : ComponentActivity() {
 
     companion object {
@@ -34,8 +36,8 @@ class ProcessTextActivity : ComponentActivity() {
 
     private val coroutineScope = CoroutineScope(SupervisorJob())
 
-    val database = TaskDatabase.getInstance(this)
-    val repository: TaskRepository = TaskRepositoryImpl(database.taskDao())
+    @Inject
+    lateinit var repository: TaskRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

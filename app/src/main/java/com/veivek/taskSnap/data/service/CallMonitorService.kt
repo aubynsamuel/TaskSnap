@@ -26,7 +26,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.veivek.taskSnap.MainActivity
 import com.veivek.taskSnap.taskActivities.CallEndedOverlayActivity
-
+import dagger.hilt.android.AndroidEntryPoint
 
 /**
  * Foreground Service for reliable call state monitoring.
@@ -36,6 +36,7 @@ import com.veivek.taskSnap.taskActivities.CallEndedOverlayActivity
  * - Uses both TelephonyCallback (Android 12+) and PhoneStateListener (older)
  * - Keeps service running to ensure calls are always detected
  */
+@AndroidEntryPoint
 class CallMonitorService : Service() {
 
     companion object {

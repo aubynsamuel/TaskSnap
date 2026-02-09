@@ -14,7 +14,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.core.content.ContextCompat
-import com.veivek.taskSnap.data.local.TaskDatabase
 import com.veivek.taskSnap.data.service.CallMonitorService
 import com.veivek.taskSnap.presentation.components.CallEndedDialog
 import com.veivek.taskSnap.presentation.components.SetupWizardScreen
@@ -22,6 +21,7 @@ import com.veivek.taskSnap.presentation.navigation.Navigation
 import com.veivek.taskSnap.presentation.theme.TaskSnapTheme
 import com.veivek.taskSnap.presentation.utils.BatteryOptimizationHelper
 import com.veivek.taskSnap.presentation.utils.OverlayPermissionHelper
+import dagger.hilt.android.AndroidEntryPoint
 
 /**
  * Main Activity for TaskSnap MVP
@@ -31,6 +31,7 @@ import com.veivek.taskSnap.presentation.utils.OverlayPermissionHelper
  * - Explicit service start after permissions granted
  * - Verification that service is actually running
  */
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
     companion object {
@@ -117,9 +118,7 @@ class MainActivity : ComponentActivity() {
                         }
                     )
                 } else {
-                    // Initialize database and navigation
-                    val database = TaskDatabase.getInstance(this)
-                    Navigation(database = database)
+                    Navigation()
                 }
 
                 // Call ended dialog (fallback if overlay not shown)

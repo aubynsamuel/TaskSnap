@@ -20,6 +20,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -33,7 +35,6 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import com.veivek.taskSnap.domain.model.Quadrant
-import com.veivek.taskSnap.domain.repository.TaskRepository
 import com.veivek.taskSnap.presentation.components.EmptyQuadrantState
 import com.veivek.taskSnap.presentation.components.EnhancedAddTaskDialog
 import com.veivek.taskSnap.presentation.components.SwipeableTaskCard
@@ -62,11 +63,9 @@ fun QuadrantDetailScreen(
     quadrantNumber: Int,
     backStack: NavBackStack<NavKey>,
     viewModel: TaskViewModel,
-    repository: TaskRepository,
 ) {
     val quadrant = Quadrant.fromNumber(quadrantNumber)
-    val tasks by repository.observeTasksByQuadrant(quadrant).collectAsState(initial = emptyList())
-
+    val tasks by viewModel.tasksByQuadrant.collectAsState()
     var showAddTaskDialog by remember { mutableStateOf(false) }
 
     val (primaryColor, secondaryColor, containerColor) = when (quadrant) {
@@ -81,6 +80,14 @@ fun QuadrantDetailScreen(
         Quadrant.Q2_SCHEDULE -> "📅"
         Quadrant.Q3_DELEGATE -> "👥"
         Quadrant.Q4_DELETE -> "🗑️"
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.observeTasksByQuadrant(quadrant)
+    }
+
+    DisposableEffect(Unit) {
+        onDispose { viewModel.removeObserver() }
     }
 
     Scaffold(
