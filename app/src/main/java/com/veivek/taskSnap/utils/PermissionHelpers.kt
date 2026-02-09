@@ -70,7 +70,7 @@ object BatteryOptimizationHelper {
             }
             try {
                 context.startActivity(intent)
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 // Fallback to general battery optimization settings
                 val fallbackIntent =
                     Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS).apply {

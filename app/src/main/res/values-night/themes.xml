@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.TaskSnap" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.TaskSnap" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/black</item>
+    </style>
 
     <!-- Transparent theme for dialog-like activities (ProcessTextActivity) -->
     <style name="Theme.TaskSnap.Transparent" parent="android:Theme.Material.Light.NoActionBar">

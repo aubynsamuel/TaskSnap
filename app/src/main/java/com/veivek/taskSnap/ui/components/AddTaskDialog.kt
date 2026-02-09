@@ -1,114 +1,16 @@
 package com.veivek.taskSnap.ui.components
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
-import com.veivek.taskSnap.data.TaskRepository
-import com.veivek.taskSnap.data.TaskSource
-
-@Composable
-fun AddTaskDialog(
-    onDismiss: () -> Unit,
-    initialTitle: String = "",
-    initialDescription: String = "",
-    source: TaskSource = TaskSource.MANUAL,
-    dialogTitle: String = "➕ New Task"
-) {
-    var title by remember { mutableStateOf(initialTitle) }
-    var description by remember { mutableStateOf(initialDescription) }
-
-    Dialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(
-            dismissOnBackPress = true,
-            dismissOnClickOutside = true
-        )
-    ) {
-        Surface(
-            shape = RoundedCornerShape(16.dp),
-            color = MaterialTheme.colorScheme.surface,
-            tonalElevation = 8.dp
-        ) {
-            Column(
-                modifier = Modifier
-                    .padding(24.dp)
-                    .fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                Text(
-                    text = dialogTitle,
-                    style = MaterialTheme.typography.titleLarge
-                )
-
-                OutlinedTextField(
-                    value = title,
-                    onValueChange = { title = it },
-                    label = { Text("Task Title") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
-
-                OutlinedTextField(
-                    value = description,
-                    onValueChange = { description = it },
-                    label = { Text("Description (optional)") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 100.dp),
-                    maxLines = 5
-                )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    TextButton(onClick = onDismiss) {
-                        Text("Cancel")
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Button(
-                        onClick = {
-                            if (title.isNotBlank()) {
-                                TaskRepository.addTask(
-                                    title = title,
-                                    description = description,
-                                    source = source
-                                )
-                                onDismiss()
-                            }
-                        },
-                        enabled = title.isNotBlank()
-                    ) {
-                        Text("Save Task")
-                    }
-                }
-            }
-        }
-    }
-}
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalContext
+import com.veivek.taskSnap.data.local.TaskDatabase
+import com.veivek.taskSnap.data.repository.TaskRepositoryImpl
+import com.veivek.taskSnap.domain.model.Task
+import com.veivek.taskSnap.domain.model.TaskSource
+import com.veivek.taskSnap.domain.repository.TaskRepository
+import com.veivek.taskSnap.presentation.components.EnhancedAddTaskDialog
+import kotlinx.coroutines.launch
+import java.util.UUID
 
 /**
  * Dialog shown after a call ends.
@@ -119,18 +21,43 @@ fun CallEndedDialog(
     phoneNumber: String?,
     contactName: String?,
     isIncoming: Boolean,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
 ) {
     val callType = if (isIncoming) "incoming" else "outgoing"
     val displayName = contactName ?: phoneNumber ?: "Unknown"
     val suggestedTitle = "Follow up: $displayName"
     val suggestedDescription = "After $callType call with $displayName"
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    val database = TaskDatabase.getInstance(context)
+    val repository: TaskRepository = TaskRepositoryImpl(database.taskDao())
 
-    AddTaskDialog(
+    EnhancedAddTaskDialog(
         onDismiss = onDismiss,
-        initialTitle = suggestedTitle,
-        initialDescription = suggestedDescription,
-        source = TaskSource.CALL_ENDED,
-        dialogTitle = "📞 Task after call with $displayName"
+        prefillTitle = suggestedTitle,
+        prefillDescription = suggestedDescription,
+        onSave = { title, description, isUrgent, isImportant ->
+            coroutineScope.launch {
+                repository.addTask(
+                    Task(
+                        id = UUID.randomUUID().toString(),
+                        title = title,
+                        description = description,
+                        isUrgent = isUrgent,
+                        isImportant = isImportant,
+                        createdTimestamp = System.currentTimeMillis(),
+                        lastModified = System.currentTimeMillis(),
+                        source = TaskSource.CALL_ENDED,
+                        relatedContact = contactName,
+                        assignedTo = null,
+                        isSynced = false,
+                        cloudId = null,
+                        isCompleted = false,
+                        completedTimestamp = null,
+                    )
+                )
+                onDismiss()
+            }
+        },
     )
 }

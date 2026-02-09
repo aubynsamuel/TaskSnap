@@ -5,34 +5,17 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
-import com.veivek.taskSnap.data.TaskRepository
-import com.veivek.taskSnap.data.TaskSource
+import com.veivek.taskSnap.data.local.TaskDatabase
+import com.veivek.taskSnap.data.repository.TaskRepositoryImpl
+import com.veivek.taskSnap.domain.model.Task
+import com.veivek.taskSnap.domain.model.TaskSource
+import com.veivek.taskSnap.domain.repository.TaskRepository
+import com.veivek.taskSnap.presentation.components.EnhancedAddTaskDialog
 import com.veivek.taskSnap.ui.theme.TaskSnapTheme
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import java.util.UUID
 
 /**
  * Activity that handles ACTION_PROCESS_TEXT and ACTION_SEND intents.
@@ -49,6 +32,11 @@ class ProcessTextActivity : ComponentActivity() {
         private const val TAG = "ProcessTextActivity"
     }
 
+    private val coroutineScope = CoroutineScope(SupervisorJob())
+
+    val database = TaskDatabase.getInstance(this)
+    val repository: TaskRepository = TaskRepositoryImpl(database.taskDao())
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -64,17 +52,31 @@ class ProcessTextActivity : ComponentActivity() {
 
         setContent {
             TaskSnapTheme {
-                QuickTaskDialog(
-                    initialText = text,
-                    source = source,
+                EnhancedAddTaskDialog(
+                    prefillTitle = text,
                     onDismiss = { finish() },
-                    onSave = { title, description ->
-                        TaskRepository.addTask(
-                            title = title,
-                            description = description,
-                            source = source
-                        )
-                        finish()
+                    onSave = { title, description, isUrgent, isImportant ->
+                        coroutineScope.launch {
+                            repository.addTask(
+                                Task(
+                                    id = UUID.randomUUID().toString(),
+                                    title = title,
+                                    description = description,
+                                    isUrgent = isUrgent,
+                                    isImportant = isImportant,
+                                    createdTimestamp = System.currentTimeMillis(),
+                                    lastModified = System.currentTimeMillis(),
+                                    source = TaskSource.SHARE_INTENT,
+                                    relatedContact = null,
+                                    assignedTo = null,
+                                    isSynced = false,
+                                    cloudId = null,
+                                    isCompleted = false,
+                                    completedTimestamp = null,
+                                )
+                            )
+                            finish()
+                        }
                     }
                 )
             }
@@ -105,80 +107,3 @@ class ProcessTextActivity : ComponentActivity() {
     }
 }
 
-@Composable
-fun QuickTaskDialog(
-    initialText: String,
-    source: TaskSource,
-    onDismiss: () -> Unit,
-    onSave: (title: String, description: String) -> Unit,
-) {
-    var title by remember { mutableStateOf(initialText.take(100)) } // Limit title length
-    var description by remember {
-        mutableStateOf(if (initialText.length > 100) initialText else "")
-    }
-
-    Dialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(
-            dismissOnBackPress = true,
-            dismissOnClickOutside = true
-        )
-    ) {
-        Surface(
-            shape = RoundedCornerShape(16.dp),
-            color = MaterialTheme.colorScheme.surface,
-            tonalElevation = 8.dp
-        ) {
-            Column(
-                modifier = Modifier
-                    .padding(24.dp)
-                    .fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                Text(
-                    text = when (source) {
-                        TaskSource.TEXT_SELECTION -> "📝 Create Task from Selection"
-                        TaskSource.SHARE_INTENT -> "📤 Create Task from Share"
-                        else -> "➕ New Task"
-                    },
-                    style = MaterialTheme.typography.titleLarge
-                )
-
-                OutlinedTextField(
-                    value = title,
-                    onValueChange = { title = it },
-                    label = { Text("Task Title") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
-
-                OutlinedTextField(
-                    value = description,
-                    onValueChange = { description = it },
-                    label = { Text("Description (optional)") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 100.dp),
-                    maxLines = 5
-                )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    TextButton(onClick = onDismiss) {
-                        Text("Cancel")
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Button(
-                        onClick = { onSave(title, description) },
-                        enabled = title.isNotBlank()
-                    ) {
-                        Text("Save Task")
-                    }
-                }
-            }
-        }
-    }
-}

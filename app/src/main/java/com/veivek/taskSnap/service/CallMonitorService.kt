@@ -59,11 +59,7 @@ class CallMonitorService : Service() {
                 action = ACTION_START
             }
             try {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    context.startForegroundService(intent)
-                } else {
-                    context.startService(intent)
-                }
+                context.startForegroundService(intent)
                 Log.d(TAG, "✅ Service start requested")
             } catch (e: Exception) {
                 Log.e(TAG, "❌ Failed to start service", e)
@@ -88,11 +84,6 @@ class CallMonitorService : Service() {
     private var isIncoming = false
     private var lastPhoneNumber: String? = null
     private var isMonitoring = false
-
-    // Call duration tracking
-    private var callStartTime: Long = 0
-    private var callAnsweredTime: Long = 0
-    private val MIN_CALL_DURATION_MS = 3000 // Only show overlay for calls longer than 3 seconds
 
     override fun onCreate() {
         super.onCreate()
@@ -136,19 +127,17 @@ class CallMonitorService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     private fun createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                CHANNEL_ID,
-                "Call Monitor",
-                NotificationManager.IMPORTANCE_LOW
-            ).apply {
-                description = "Monitors calls to create follow-up tasks"
-                setShowBadge(false)
-            }
-            val notificationManager = getSystemService(NotificationManager::class.java)
-            notificationManager.createNotificationChannel(channel)
-            Log.d(TAG, "✅ Notification channel created")
+        val channel = NotificationChannel(
+            CHANNEL_ID,
+            "Call Monitor",
+            NotificationManager.IMPORTANCE_LOW
+        ).apply {
+            description = "Monitors calls to create follow-up tasks"
+            setShowBadge(false)
         }
+        val notificationManager = getSystemService(NotificationManager::class.java)
+        notificationManager.createNotificationChannel(channel)
+        Log.d(TAG, "✅ Notification channel created")
     }
 
     private fun createNotification(): Notification {
@@ -303,16 +292,14 @@ class CallMonitorService : Service() {
                     TelephonyManager.CALL_STATE_IDLE -> {
                         // Outgoing call started
                         isIncoming = false
-                        callStartTime = System.currentTimeMillis()
-                        Log.d(TAG, "📞 IDLE→OFFHOOK → Outgoing call started at $callStartTime")
+                        Log.d(TAG, "📞 IDLE→OFFHOOK → Outgoing call started at")
                     }
 
                     TelephonyManager.CALL_STATE_RINGING -> {
                         // Incoming call was answered
-                        callAnsweredTime = System.currentTimeMillis()
                         Log.d(
                             TAG,
-                            "📞 RINGING→OFFHOOK → Incoming call answered at $callAnsweredTime"
+                            "📞 RINGING→OFFHOOK → Incoming call answered"
                         )
                     }
 
@@ -325,34 +312,15 @@ class CallMonitorService : Service() {
             TelephonyManager.CALL_STATE_IDLE -> {
                 when (previousState) {
                     TelephonyManager.CALL_STATE_OFFHOOK -> {
-                        // Call ended - check if it was answered and duration
-                        val callDuration =
-                            System.currentTimeMillis() - maxOf(callStartTime, callAnsweredTime)
-                        val wasAnswered = callAnsweredTime > 0 || callStartTime > 0
-
                         Log.d(
                             TAG,
-                            "📞 OFFHOOK→IDLE → Call ended. Duration: ${callDuration}ms, Answered: $wasAnswered"
+                            "📞 OFFHOOK→IDLE → Call ended"
                         )
-
-                        // Only trigger overlay for answered calls with minimum duration
-                        if (wasAnswered && callDuration >= MIN_CALL_DURATION_MS) {
-                            Log.d(TAG, "✅ Call qualifies for task creation prompt")
-                            handleCallEnded()
-                        } else {
-                            Log.d(TAG, "⏭️ Skipping overlay - call too short or not answered")
-                        }
-
-                        // Reset call tracking
-                        callStartTime = 0
-                        callAnsweredTime = 0
+                        handleCallEnded()
                     }
 
                     TelephonyManager.CALL_STATE_RINGING -> {
                         Log.d(TAG, "📞 RINGING→IDLE → Missed call (not answered) - NO OVERLAY")
-                        // Reset tracking
-                        callStartTime = 0
-                        callAnsweredTime = 0
                     }
 
                     else -> {

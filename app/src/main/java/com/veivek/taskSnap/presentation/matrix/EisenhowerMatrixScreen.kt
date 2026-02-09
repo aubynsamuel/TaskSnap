@@ -7,7 +7,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -37,7 +36,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -47,8 +45,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -119,11 +117,7 @@ fun EisenhowerMatrixScreen(
                     IconButton(onClick = { backStack.navigate(AppRoutes.Settings) }) {
                         Icon(Icons.Default.Settings, contentDescription = "Settings")
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface
-                )
+                }
             )
         },
         floatingActionButton = {
@@ -246,7 +240,7 @@ fun QuadrantCard(
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
-    val (primaryColor, secondaryColor, containerColor) = when (quadrant) {
+    val (primaryColor, _, containerColor) = when (quadrant) {
         Quadrant.Q1_DO_FIRST -> Triple(Q1Primary, Q1Secondary, Q1Container)
         Quadrant.Q2_SCHEDULE -> Triple(Q2Primary, Q2Secondary, Q2Container)
         Quadrant.Q3_DELEGATE -> Triple(Q3Primary, Q3Secondary, Q3Container)
@@ -262,80 +256,68 @@ fun QuadrantCard(
 
     Card(
         modifier = modifier
-            .fillMaxSize()
-            .clickable(onClick = onClick),
+            .fillMaxSize(),
         shape = RoundedCornerShape(20.dp),
         elevation = CardDefaults.cardElevation(
             defaultElevation = 4.dp,
             pressedElevation = 8.dp
         ),
         colors = CardDefaults.cardColors(
-            containerColor = containerColor
+            containerColor = containerColor.compositeOver(primaryColor)
         )
     ) {
-        Box(
+        Column(
             modifier = Modifier
+                .clickable(onClick = onClick)
                 .fillMaxSize()
-                .background(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(
-                            containerColor,
-                            containerColor.copy(alpha = 0.7f)
-                        )
-                    )
-                )
-                .padding(16.dp)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.SpaceBetween
-            ) {
-                // Header
-                Column {
-                    Text(
-                        text = emoji,
-                        style = MaterialTheme.typography.displaySmall
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = quadrant.displayName,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = primaryColor
-                    )
-                    Text(
-                        text = quadrant.description,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = primaryColor.copy(alpha = 0.7f)
-                    )
-                }
+            // Header
+            Column {
+                Text(
+                    text = emoji,
+                    style = MaterialTheme.typography.displaySmall
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = quadrant.displayName,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = primaryColor
+                )
+                Text(
+                    text = quadrant.description,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = primaryColor.copy(alpha = 0.7f)
+                )
+            }
 
-                // Task count badge
-                AnimatedVisibility(
-                    visible = taskCount > 0,
-                    enter = scaleIn(spring(stiffness = Spring.StiffnessHigh)) + fadeIn(),
-                    exit = scaleOut() + fadeOut()
+            // Task count badge
+            AnimatedVisibility(
+                visible = taskCount > 0,
+                enter = scaleIn(spring(stiffness = Spring.StiffnessHigh)) + fadeIn(),
+                exit = scaleOut() + fadeOut()
+            ) {
+                Surface(
+                    modifier = Modifier.align(Alignment.End),
+                    shape = CircleShape,
+                    color = primaryColor,
+                    shadowElevation = 4.dp
                 ) {
-                    Surface(
-                        modifier = Modifier.align(Alignment.End),
-                        shape = CircleShape,
-                        color = primaryColor,
-                        shadowElevation = 4.dp
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .padding(8.dp),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(48.dp)
-                                .padding(8.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = taskCount.toString(),
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White,
-                                textAlign = TextAlign.Center
-                            )
-                        }
+                        Text(
+                            text = taskCount.toString(),
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                            textAlign = TextAlign.Center
+                        )
                     }
                 }
             }

@@ -5,6 +5,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.retain.retain
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
@@ -28,7 +29,7 @@ fun Navigation(
     val repository: TaskRepository = TaskRepositoryImpl(database.taskDao())
 
     // Create ViewModel (in production, use proper DI)
-    val viewModel = TaskViewModel(repository)
+    val viewModel = viewModel { TaskViewModel(repository) }
 
     // Create navigation backstack starting at Eisenhower Matrix
     val backStack = retain { NavBackStack<NavKey>(AppRoutes.EisenhowerMatrix) }

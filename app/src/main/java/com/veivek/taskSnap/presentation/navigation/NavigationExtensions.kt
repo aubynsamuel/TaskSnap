@@ -51,6 +51,6 @@ fun NavBackStack<NavKey>.clearUpTo(targetScreen: NavKey) {
  */
 fun NavBackStack<NavKey>.popOrStay() {
     if (this.size > 1) {
-        this.removeLast()
+        this.removeLastOrNull()
     }
 }
