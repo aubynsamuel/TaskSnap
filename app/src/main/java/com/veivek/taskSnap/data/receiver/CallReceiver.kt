@@ -1,11 +1,11 @@
-package com.veivek.taskSnap.receiver
+package com.veivek.taskSnap.data.receiver
 
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.telephony.TelephonyManager
 import android.util.Log
-import com.veivek.taskSnap.service.CallMonitorService
+import com.veivek.taskSnap.data.service.CallMonitorService
 
 /**
  * BroadcastReceiver to detect phone call state changes and ensure service is running.

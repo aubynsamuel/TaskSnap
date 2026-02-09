@@ -46,10 +46,10 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import com.veivek.taskSnap.ui.theme.Q1Primary
-import com.veivek.taskSnap.ui.theme.Q2Primary
-import com.veivek.taskSnap.ui.theme.Q3Primary
-import com.veivek.taskSnap.ui.theme.Q4Primary
+import com.veivek.taskSnap.presentation.theme.Q1Primary
+import com.veivek.taskSnap.presentation.theme.Q2Primary
+import com.veivek.taskSnap.presentation.theme.Q3Primary
+import com.veivek.taskSnap.presentation.theme.Q4Primary
 
 /**
  * Enhanced dialog for adding a new task.

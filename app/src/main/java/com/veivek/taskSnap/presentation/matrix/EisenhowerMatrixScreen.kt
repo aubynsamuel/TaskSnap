@@ -56,18 +56,18 @@ import com.veivek.taskSnap.domain.model.Quadrant
 import com.veivek.taskSnap.presentation.components.EnhancedAddTaskDialog
 import com.veivek.taskSnap.presentation.navigation.AppRoutes
 import com.veivek.taskSnap.presentation.navigation.navigate
-import com.veivek.taskSnap.ui.theme.Q1Container
-import com.veivek.taskSnap.ui.theme.Q1Primary
-import com.veivek.taskSnap.ui.theme.Q1Secondary
-import com.veivek.taskSnap.ui.theme.Q2Container
-import com.veivek.taskSnap.ui.theme.Q2Primary
-import com.veivek.taskSnap.ui.theme.Q2Secondary
-import com.veivek.taskSnap.ui.theme.Q3Container
-import com.veivek.taskSnap.ui.theme.Q3Primary
-import com.veivek.taskSnap.ui.theme.Q3Secondary
-import com.veivek.taskSnap.ui.theme.Q4Container
-import com.veivek.taskSnap.ui.theme.Q4Primary
-import com.veivek.taskSnap.ui.theme.Q4Secondary
+import com.veivek.taskSnap.presentation.theme.Q1Container
+import com.veivek.taskSnap.presentation.theme.Q1Primary
+import com.veivek.taskSnap.presentation.theme.Q1Secondary
+import com.veivek.taskSnap.presentation.theme.Q2Container
+import com.veivek.taskSnap.presentation.theme.Q2Primary
+import com.veivek.taskSnap.presentation.theme.Q2Secondary
+import com.veivek.taskSnap.presentation.theme.Q3Container
+import com.veivek.taskSnap.presentation.theme.Q3Primary
+import com.veivek.taskSnap.presentation.theme.Q3Secondary
+import com.veivek.taskSnap.presentation.theme.Q4Container
+import com.veivek.taskSnap.presentation.theme.Q4Primary
+import com.veivek.taskSnap.presentation.theme.Q4Secondary
 
 /**
  * Eisenhower Matrix Screen - Main screen showing 4-quadrant grid.

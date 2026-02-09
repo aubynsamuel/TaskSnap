@@ -1,6 +1,5 @@
-package com.veivek.taskSnap
+package com.veivek.taskSnap.taskActivities
 
-import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -11,50 +10,46 @@ import com.veivek.taskSnap.domain.model.Task
 import com.veivek.taskSnap.domain.model.TaskSource
 import com.veivek.taskSnap.domain.repository.TaskRepository
 import com.veivek.taskSnap.presentation.components.EnhancedAddTaskDialog
-import com.veivek.taskSnap.ui.theme.TaskSnapTheme
+import com.veivek.taskSnap.presentation.theme.TaskSnapTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import java.util.UUID
 
 /**
- * Activity that handles ACTION_PROCESS_TEXT and ACTION_SEND intents.
- * This is the core of Feature 2: Text Selection & Share Integration
- *
- * Technical Notes:
- * - ACTION_PROCESS_TEXT: Appears in the text selection menu (Android 6+)
- * - ACTION_SEND: Appears in the share sheet
- * - Uses a transparent theme to show as a dialog
+ * Floating overlay window that appears after a call ends.
+ * This is the Truecaller-style popup that appears on top of everything.
  */
-class ProcessTextActivity : ComponentActivity() {
+class CallEndedOverlayActivity : ComponentActivity() {
 
     companion object {
-        private const val TAG = "ProcessTextActivity"
+        const val TAG = "CallEndedOverlayActivity"
+        const val EXTRA_PHONE_NUMBER = "extra_phone_number"
+        const val EXTRA_CONTACT_NAME = "extra_contact_name"
+        const val EXTRA_IS_INCOMING = "extra_is_incoming"
     }
 
     private val coroutineScope = CoroutineScope(SupervisorJob())
 
-    val database = TaskDatabase.getInstance(this)
-    val repository: TaskRepository = TaskRepositoryImpl(database.taskDao())
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Log.d(TAG, "onCreate: CallEndedOverlayActivity started")
 
-        val (text, source) = extractTextFromIntent(intent)
+        val phoneNumber = intent.getStringExtra(EXTRA_PHONE_NUMBER)
+        val contactName = intent.getStringExtra(EXTRA_CONTACT_NAME)
+        val isIncoming = intent.getBooleanExtra(EXTRA_IS_INCOMING, false)
 
-        if (text.isNullOrBlank()) {
-            Log.w(TAG, "No text received, finishing")
-            finish()
-            return
-        }
+        val displayName = contactName ?: phoneNumber ?: "Unknown"
 
-        Log.d(TAG, "Received text: $text from source: $source")
+        val database = TaskDatabase.Companion.getInstance(applicationContext)
+        val repository: TaskRepository = TaskRepositoryImpl(database.taskDao())
 
         setContent {
             TaskSnapTheme {
                 EnhancedAddTaskDialog(
-                    prefillTitle = text,
                     onDismiss = { finish() },
+                    prefillTitle = "Follow up: $displayName",
+                    prefillDescription = "",
                     onSave = { title, description, isUrgent, isImportant ->
                         coroutineScope.launch {
                             repository.addTask(
@@ -66,8 +61,8 @@ class ProcessTextActivity : ComponentActivity() {
                                     isImportant = isImportant,
                                     createdTimestamp = System.currentTimeMillis(),
                                     lastModified = System.currentTimeMillis(),
-                                    source = TaskSource.SHARE_INTENT,
-                                    relatedContact = null,
+                                    source = TaskSource.CALL_ENDED,
+                                    relatedContact = contactName,
                                     assignedTo = null,
                                     isSynced = false,
                                     cloudId = null,
@@ -77,33 +72,9 @@ class ProcessTextActivity : ComponentActivity() {
                             )
                             finish()
                         }
-                    }
+                    },
                 )
             }
         }
     }
-
-    private fun extractTextFromIntent(intent: Intent): Pair<String?, TaskSource> {
-        return when (intent.action) {
-            // Text selection menu
-            Intent.ACTION_PROCESS_TEXT -> {
-                val text = intent.getCharSequenceExtra(Intent.EXTRA_PROCESS_TEXT)?.toString()
-                Pair(text, TaskSource.TEXT_SELECTION)
-            }
-            // Share sheet
-            Intent.ACTION_SEND -> {
-                val text = when {
-                    intent.type?.startsWith("text/") == true -> {
-                        intent.getStringExtra(Intent.EXTRA_TEXT)
-                    }
-
-                    else -> null
-                }
-                Pair(text, TaskSource.SHARE_INTENT)
-            }
-
-            else -> Pair(null, TaskSource.MANUAL)
-        }
-    }
 }
-

@@ -1,6 +1,7 @@
-package com.veivek.taskSnap.service
+package com.veivek.taskSnap.data.service
 
 import android.Manifest
+import android.R
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -11,8 +12,10 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.IBinder
+import android.provider.CallLog
 import android.provider.ContactsContract
 import android.telephony.PhoneStateListener
 import android.telephony.TelephonyCallback
@@ -22,8 +25,8 @@ import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.veivek.taskSnap.MainActivity
-import com.veivek.taskSnap.ui.overlay.CallEndedOverlay
-import com.veivek.taskSnap.utils.OverlayPermissionHelper
+import com.veivek.taskSnap.taskActivities.CallEndedOverlayActivity
+
 
 /**
  * Foreground Service for reliable call state monitoring.
@@ -151,7 +154,7 @@ class CallMonitorService : Service() {
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("TaskSnap Active")
             .setContentText("Monitoring calls for task creation")
-            .setSmallIcon(android.R.drawable.ic_menu_call)
+            .setSmallIcon(R.drawable.ic_menu_call)
             .setOngoing(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setContentIntent(pendingIntent)
@@ -172,7 +175,7 @@ class CallMonitorService : Service() {
             return
         }
 
-        telephonyManager = getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
+        telephonyManager = getSystemService(TELEPHONY_SERVICE) as TelephonyManager
 
         // Strategy 1: Register dynamic broadcast receiver (works on Android 9+)
         registerDynamicPhoneStateReceiver()
@@ -353,18 +356,21 @@ class CallMonitorService : Service() {
         // Notify via callback (for when app is visible)
         onCallEnded?.invoke(phoneNumber, contactName, isIncoming)
 
-        // Show overlay window (Truecaller-style popup)
-        if (OverlayPermissionHelper.hasOverlayPermission(this)) {
-            try {
-                val overlay = CallEndedOverlay(applicationContext)
-                overlay.show(phoneNumber, contactName, isIncoming)
-                Log.d(TAG, "✅ Overlay window shown")
-            } catch (e: Exception) {
-                Log.e(TAG, "❌ Failed to show overlay, falling back to notification", e)
-                showCallEndedNotification(phoneNumber, contactName, isIncoming)
-            }
-        } else {
-            Log.w(TAG, "⚠️ No overlay permission, showing notification instead")
+        val overlayIntent = Intent(this, CallEndedOverlayActivity::class.java).apply {
+            putExtra(CallEndedOverlayActivity.EXTRA_PHONE_NUMBER, phoneNumber)
+            putExtra(CallEndedOverlayActivity.EXTRA_CONTACT_NAME, contactName)
+            putExtra(CallEndedOverlayActivity.EXTRA_IS_INCOMING, isIncoming)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) // Required for starting Activity from a non-Activity context
+        }
+        try {
+            startActivity(overlayIntent)
+            Log.d(TAG, "✅ CallEndedOverlayActivity started")
+        } catch (e: Exception) {
+            Log.e(
+                TAG,
+                "❌ Failed to start CallEndedOverlayActivity, falling back to notification",
+                e
+            )
             showCallEndedNotification(phoneNumber, contactName, isIncoming)
         }
 
@@ -398,13 +404,13 @@ class CallMonitorService : Service() {
 
         return try {
             val cursor = contentResolver.query(
-                android.provider.CallLog.Calls.CONTENT_URI,
+                CallLog.Calls.CONTENT_URI,
                 arrayOf(
-                    android.provider.CallLog.Calls.NUMBER,
-                    android.provider.CallLog.Calls.DATE
+                    CallLog.Calls.NUMBER,
+                    CallLog.Calls.DATE
                 ),
                 null, null,
-                "${android.provider.CallLog.Calls.DATE} DESC"
+                "${CallLog.Calls.DATE} DESC"
             )
             cursor?.use {
                 if (it.moveToFirst()) {
@@ -432,9 +438,9 @@ class CallMonitorService : Service() {
         }
 
         return try {
-            val uri = android.net.Uri.withAppendedPath(
+            val uri = Uri.withAppendedPath(
                 ContactsContract.PhoneLookup.CONTENT_FILTER_URI,
-                android.net.Uri.encode(phoneNumber)
+                Uri.encode(phoneNumber)
             )
             contentResolver.query(
                 uri,
@@ -484,7 +490,7 @@ class CallMonitorService : Service() {
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("📞 Create task after call?")
             .setContentText("$callType call with $displayName ended")
-            .setSmallIcon(android.R.drawable.ic_menu_call)
+            .setSmallIcon(R.drawable.ic_menu_call)
             .setAutoCancel(true)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setContentIntent(pendingIntent)

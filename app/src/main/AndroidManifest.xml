@@ -52,7 +52,7 @@
         2. ACTION_SEND - Shows "TaskSnap" in share sheet
         -->
         <activity
-            android:name=".ProcessTextActivity"
+            android:name=".taskActivities.ProcessTextActivity"
             android:excludeFromRecents="true"
             android:exported="true"
             android:label="TaskSnap"
@@ -80,13 +80,20 @@
 
         </activity>
 
+        <activity
+            android:name=".taskActivities.CallEndedOverlayActivity"
+            android:theme="@style/Theme.TaskSnap.OverlayDialog"
+            android:exported="false"
+            android:taskAffinity=""
+            android:excludeFromRecents="true" />
+
         <!-- 
         Feature 1: Call Monitor Foreground Service
         This service runs in foreground to reliably detect call state changes.
         Required for Android 10+ due to background execution limits.
         -->
         <service
-            android:name=".service.CallMonitorService"
+            android:name=".data.service.CallMonitorService"
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="specialUse">
@@ -100,7 +107,7 @@
         This enables Truecaller-style behavior (no need to manually open app).
         -->
         <receiver
-            android:name=".receiver.BootReceiver"
+            android:name=".data.receiver.BootReceiver"
             android:enabled="true"
             android:exported="true">
             <intent-filter>
@@ -115,7 +122,7 @@
         This manifest entry is kept for older Android versions.
         -->
         <receiver
-            android:name=".receiver.CallReceiver"
+            android:name=".data.receiver.CallReceiver"
             android:enabled="true"
             android:exported="true">
             <intent-filter>

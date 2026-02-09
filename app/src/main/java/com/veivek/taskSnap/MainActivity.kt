@@ -33,12 +33,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.veivek.taskSnap.data.local.TaskDatabase
+import com.veivek.taskSnap.data.service.CallMonitorService
+import com.veivek.taskSnap.presentation.components.CallEndedDialog
 import com.veivek.taskSnap.presentation.navigation.Navigation
-import com.veivek.taskSnap.service.CallMonitorService
-import com.veivek.taskSnap.ui.components.CallEndedDialog
-import com.veivek.taskSnap.ui.theme.TaskSnapTheme
-import com.veivek.taskSnap.utils.BatteryOptimizationHelper
-import com.veivek.taskSnap.utils.OverlayPermissionHelper
+import com.veivek.taskSnap.presentation.theme.TaskSnapTheme
+import com.veivek.taskSnap.presentation.utils.BatteryOptimizationHelper
+import com.veivek.taskSnap.presentation.utils.OverlayPermissionHelper
 
 /**
  * Main Activity for TaskSnap MVP

@@ -1,10 +1,10 @@
-package com.veivek.taskSnap.receiver
+package com.veivek.taskSnap.data.receiver
 
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.util.Log
-import com.veivek.taskSnap.service.CallMonitorService
+import com.veivek.taskSnap.data.service.CallMonitorService
 
 /**
  * Boot Receiver - Automatically starts call monitoring service when device boots.
