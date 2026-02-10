@@ -26,6 +26,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.veivek.taskSnap.domain.model.Task
@@ -43,6 +44,12 @@ fun SwipeableTaskCard(
     onDelete: () -> Unit,
     quadrantColor: Color,
     onClick: () -> Unit = {},
+    startToEndLabel: String = "Complete",
+    startToEndIcon: ImageVector = Icons.Default.Check,
+    startToEndColor: Color = SuccessLight,
+    endToStartLabel: String = "Delete",
+    endToStartIcon: ImageVector = Icons.Default.Delete,
+    endToStartColor: Color = ErrorLight,
 ) {
     val dismissState = rememberSwipeToDismissBoxState(
         confirmValueChange = { value ->
@@ -67,12 +74,19 @@ fun SwipeableTaskCard(
     SwipeToDismissBox(
         state = dismissState,
         backgroundContent = {
+            val direction = dismissState.dismissDirection
+            // Use targetValue OR direction (if dragging) to determine color/content
+            val isStartToEnd = direction == SwipeToDismissBoxValue.StartToEnd
+            val isEndToStart = direction == SwipeToDismissBoxValue.EndToStart
+
+            val targetColor = when {
+                isStartToEnd -> startToEndColor
+                isEndToStart -> endToStartColor
+                else -> Color.Transparent
+            }
+
             val color by animateColorAsState(
-                targetValue = when (dismissState.targetValue) {
-                    SwipeToDismissBoxValue.StartToEnd -> SuccessLight
-                    SwipeToDismissBoxValue.EndToStart -> ErrorLight
-                    else -> Color.Transparent
-                },
+                targetValue = targetColor,
                 label = "swipe_bg",
                 animationSpec = spring(stiffness = Spring.StiffnessHigh)
             )
@@ -82,26 +96,26 @@ fun SwipeableTaskCard(
                     .fillMaxSize()
                     .background(color, RoundedCornerShape(16.dp))
                     .padding(horizontal = 24.dp),
-                contentAlignment = when (dismissState.targetValue) {
-                    SwipeToDismissBoxValue.StartToEnd -> Alignment.CenterStart
-                    SwipeToDismissBoxValue.EndToStart -> Alignment.CenterEnd
+                contentAlignment = when {
+                    isStartToEnd -> Alignment.CenterStart
+                    isEndToStart -> Alignment.CenterEnd
                     else -> Alignment.Center
                 }
             ) {
-                when (dismissState.targetValue) {
-                    SwipeToDismissBoxValue.StartToEnd -> {
+                when {
+                    isStartToEnd -> {
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
-                                Icons.Default.Check,
-                                contentDescription = "Complete",
+                                startToEndIcon,
+                                contentDescription = startToEndLabel,
                                 tint = Color.White,
                                 modifier = Modifier.size(28.dp)
                             )
                             Text(
-                                text = "Complete",
+                                text = startToEndLabel,
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White
@@ -109,27 +123,25 @@ fun SwipeableTaskCard(
                         }
                     }
 
-                    SwipeToDismissBoxValue.EndToStart -> {
+                    isEndToStart -> {
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "Delete",
+                                text = endToStartLabel,
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White
                             )
                             Icon(
-                                Icons.Default.Delete,
-                                contentDescription = "Delete",
+                                endToStartIcon,
+                                contentDescription = endToStartLabel,
                                 tint = Color.White,
                                 modifier = Modifier.size(28.dp)
                             )
                         }
                     }
-
-                    else -> {}
                 }
             }
         }

@@ -11,6 +11,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -41,6 +43,7 @@ import com.veivek.taskSnap.presentation.components.SwipeableTaskCard
 import com.veivek.taskSnap.presentation.navigation.AppRoutes
 import com.veivek.taskSnap.presentation.navigation.navigate
 import com.veivek.taskSnap.presentation.navigation.popOrStay
+import com.veivek.taskSnap.presentation.theme.ErrorLight
 import com.veivek.taskSnap.presentation.theme.Q1Container
 import com.veivek.taskSnap.presentation.theme.Q1Primary
 import com.veivek.taskSnap.presentation.theme.Q1Secondary
@@ -53,6 +56,7 @@ import com.veivek.taskSnap.presentation.theme.Q3Secondary
 import com.veivek.taskSnap.presentation.theme.Q4Container
 import com.veivek.taskSnap.presentation.theme.Q4Primary
 import com.veivek.taskSnap.presentation.theme.Q4Secondary
+import com.veivek.taskSnap.presentation.theme.SuccessLight
 import com.veivek.taskSnap.presentation.viewmodel.TaskViewModel
 
 /**
@@ -154,7 +158,13 @@ fun QuadrantDetailScreen(
                         onComplete = { viewModel.completeTask(task.id) },
                         onDelete = { viewModel.deleteTask(task.id) },
                         quadrantColor = primaryColor,
-                        onClick = { backStack.navigate(AppRoutes.TaskDetail(task.id)) }
+                        onClick = { backStack.navigate(AppRoutes.TaskDetail(task.id)) },
+                        startToEndLabel = "Complete",
+                        startToEndIcon = Icons.Default.Check,
+                        startToEndColor = SuccessLight,
+                        endToStartLabel = "Delete",
+                        endToStartIcon = Icons.Default.Delete,
+                        endToStartColor = ErrorLight
                     )
                 }
             }
