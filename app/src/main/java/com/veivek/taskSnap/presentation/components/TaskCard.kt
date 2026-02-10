@@ -1,5 +1,7 @@
 package com.veivek.taskSnap.presentation.components
 
+
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -32,9 +34,11 @@ import com.veivek.taskSnap.presentation.utils.formatTimestamp
 fun TaskCard(
     task: Task,
     quadrantColor: Color,
+    onClick: () -> Unit = {},
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         colors = CardDefaults.cardColors(
@@ -44,6 +48,7 @@ fun TaskCard(
     ) {
         Column(
             modifier = Modifier
+                .clickable(onClick = onClick)
                 .fillMaxWidth()
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)

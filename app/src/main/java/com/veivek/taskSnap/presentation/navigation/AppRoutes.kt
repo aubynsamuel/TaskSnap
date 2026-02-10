@@ -32,4 +32,7 @@ sealed class AppRoutes : NavKey {
 
     @Serializable
     object Settings : NavKey
+
+    @Serializable
+    object CompletedTasks : NavKey
 }

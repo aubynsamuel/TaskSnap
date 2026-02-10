@@ -1,5 +1,6 @@
 package com.veivek.taskSnap.presentation.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -40,11 +41,11 @@ fun PriorityToggle(
 ) {
     Surface(
         modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onToggle),
+            .clickable(onClick = onToggle)
+            .fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         color = if (isSelected) color.copy(alpha = 0.1f) else MaterialTheme.colorScheme.surfaceVariant,
-        border = androidx.compose.foundation.BorderStroke(
+        border = BorderStroke(
             width = 2.dp,
             color = if (isSelected) color else Color.Transparent
         )

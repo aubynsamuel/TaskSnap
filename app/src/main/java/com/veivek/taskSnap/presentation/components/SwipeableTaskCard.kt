@@ -42,6 +42,7 @@ fun SwipeableTaskCard(
     onComplete: () -> Unit,
     onDelete: () -> Unit,
     quadrantColor: Color,
+    onClick: () -> Unit = {},
 ) {
     val dismissState = rememberSwipeToDismissBoxState(
         confirmValueChange = { value ->
@@ -133,6 +134,10 @@ fun SwipeableTaskCard(
             }
         }
     ) {
-        TaskCard(task = task, quadrantColor = quadrantColor)
+        TaskCard(
+            task = task,
+            quadrantColor = quadrantColor,
+            onClick = onClick
+        )
     }
 }

@@ -27,7 +27,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -54,8 +53,9 @@ fun QuadrantCard(
     previewTasks: List<Task>,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
+    onTaskClick: (Task) -> Unit = {},
 ) {
-    val (primaryColor, containerColor, _) = when (quadrant) {
+    val (primaryColor, containerColor, onContainerColor) = when (quadrant) {
         Quadrant.Q1_DO_FIRST -> Triple(Q1Primary, Q1Container, Q1OnContainer)
         Quadrant.Q2_SCHEDULE -> Triple(Q2Primary, Q2Container, Q2OnContainer)
         Quadrant.Q3_DELEGATE -> Triple(Q3Primary, Q3Container, Q3OnContainer)
@@ -78,8 +78,8 @@ fun QuadrantCard(
             pressedElevation = 8.dp
         ),
         colors = CardDefaults.cardColors(
-            containerColor = containerColor.compositeOver(primaryColor),
-            contentColor = MaterialTheme.colorScheme.background.copy(alpha = 0.7f)
+            containerColor = containerColor,
+            contentColor = Color.Black.copy(alpha = 0.8f),
         )
     ) {
         Column(
@@ -108,7 +108,7 @@ fun QuadrantCard(
                 Text(
                     text = quadrant.description,
                     style = MaterialTheme.typography.bodySmall,
-                    color = primaryColor.copy(alpha = 0.7f)
+                    color = primaryColor.copy(alpha = 0.9f)
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -121,7 +121,10 @@ fun QuadrantCard(
                             style = MaterialTheme.typography.bodySmall,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
-                            fontWeight = FontWeight.SemiBold
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier
+                                .clickable { onTaskClick(task) }
+                                .padding(vertical = 4.dp)
                         )
                     }
 
@@ -137,7 +140,6 @@ fun QuadrantCard(
                     Text(
                         text = "No tasks",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.background.copy(alpha = 0.7f),
                         modifier = Modifier.padding(top = 4.dp)
                     )
                 }

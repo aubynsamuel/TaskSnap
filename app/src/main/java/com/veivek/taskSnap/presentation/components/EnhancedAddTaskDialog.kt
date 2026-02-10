@@ -53,13 +53,16 @@ fun EnhancedAddTaskDialog(
     onSave: (title: String, description: String, isUrgent: Boolean, isImportant: Boolean) -> Unit,
     prefillTitle: String = "",
     prefillDescription: String = "",
+    prefillIsUrgent: Boolean = false,
+    prefillIsImportant: Boolean = false,
     dialogTitle: String = "Create New Task",
+    confirmButtonText: String = "Create Task",
     subTitle: String? = null,
 ) {
     var title by remember { mutableStateOf(prefillTitle) }
     var description by remember { mutableStateOf(prefillDescription) }
-    var isUrgent by remember { mutableStateOf(false) }
-    var isImportant by remember { mutableStateOf(false) }
+    var isUrgent by remember { mutableStateOf(prefillIsUrgent) }
+    var isImportant by remember { mutableStateOf(prefillIsImportant) }
 
     val quadrantColor = when {
         isUrgent && isImportant -> Q1Primary
@@ -234,7 +237,7 @@ fun EnhancedAddTaskDialog(
                         enabled = title.isNotBlank(),
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        Text("Create Task")
+                        Text(confirmButtonText)
                     }
                 }
             }

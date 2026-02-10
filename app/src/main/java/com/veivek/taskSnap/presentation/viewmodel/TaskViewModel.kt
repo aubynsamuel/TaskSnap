@@ -58,6 +58,10 @@ class TaskViewModel @Inject constructor(
     val allTasks = repository.observeAllActiveTasks()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    // Completed tasks
+    val completedTasks = repository.observeCompletedTasks()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     // UI state
     private val _uiState = MutableStateFlow<MatrixUiState>(MatrixUiState.Success)
     val uiState: StateFlow<MatrixUiState> = _uiState.asStateFlow()
@@ -139,6 +143,19 @@ class TaskViewModel @Inject constructor(
     }
 
     /**
+     * Restore a completed task.
+     */
+    fun restoreTask(taskId: String) {
+        viewModelScope.launch {
+            repository.markTaskCompleted(taskId, false)
+                .onFailure { error ->
+                    _uiState.value =
+                        MatrixUiState.Error(error.message ?: "Failed to restore task")
+                }
+        }
+    }
+
+    /**
      * Delete a task.
      */
     fun deleteTask(taskId: String) {
@@ -147,6 +164,19 @@ class TaskViewModel @Inject constructor(
                 .onFailure { error ->
                     _uiState.value =
                         MatrixUiState.Error(error.message ?: "Failed to delete task")
+                }
+        }
+    }
+
+    /**
+     * Delete all completed tasks.
+     */
+    fun deleteAllCompletedTasks() {
+        viewModelScope.launch {
+            repository.deleteAllCompletedTasks()
+                .onFailure { error ->
+                    _uiState.value =
+                        MatrixUiState.Error(error.message ?: "Failed to delete completed tasks")
                 }
         }
     }
@@ -163,6 +193,24 @@ class TaskViewModel @Inject constructor(
                 }
         }
     }
+
+    /**
+     * Update an entire task.
+     */
+    fun updateTask(task: Task) {
+        viewModelScope.launch {
+            repository.updateTask(task)
+                .onFailure { error ->
+                    _uiState.value =
+                        MatrixUiState.Error(error.message ?: "Failed to update task")
+                }
+        }
+    }
+
+    /**
+     * Get a task by ID.
+     */
+    fun getTaskById(taskId: String) = repository.observeTaskById(taskId)
 
     /**
      * Clear error state.

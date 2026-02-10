@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -93,6 +94,9 @@ fun EisenhowerMatrixScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = { backStack.navigate(AppRoutes.CompletedTasks) }) {
+                        Icon(Icons.Default.List, contentDescription = "Completed Tasks")
+                    }
                     IconButton(onClick = { backStack.navigate(AppRoutes.Settings) }) {
                         Icon(Icons.Default.Settings, contentDescription = "Settings")
                     }
@@ -162,14 +166,16 @@ fun EisenhowerMatrixScreen(
                         taskCount = q1Count,
                         previewTasks = q1Preview,
                         modifier = Modifier.weight(1f),
-                        onClick = { backStack.navigate(AppRoutes.QuadrantDetail(1)) }
+                        onClick = { backStack.navigate(AppRoutes.QuadrantDetail(1)) },
+                        onTaskClick = { task -> backStack.navigate(AppRoutes.TaskDetail(task.id)) }
                     )
                     QuadrantCard(
                         quadrant = Quadrant.Q2_SCHEDULE,
                         taskCount = q2Count,
                         previewTasks = q2Preview,
                         modifier = Modifier.weight(1f),
-                        onClick = { backStack.navigate(AppRoutes.QuadrantDetail(2)) }
+                        onClick = { backStack.navigate(AppRoutes.QuadrantDetail(2)) },
+                        onTaskClick = { task -> backStack.navigate(AppRoutes.TaskDetail(task.id)) }
                     )
                 }
 
@@ -185,14 +191,16 @@ fun EisenhowerMatrixScreen(
                         taskCount = q3Count,
                         previewTasks = q3Preview,
                         modifier = Modifier.weight(1f),
-                        onClick = { backStack.navigate(AppRoutes.QuadrantDetail(3)) }
+                        onClick = { backStack.navigate(AppRoutes.QuadrantDetail(3)) },
+                        onTaskClick = { task -> backStack.navigate(AppRoutes.TaskDetail(task.id)) }
                     )
                     QuadrantCard(
                         quadrant = Quadrant.Q4_DELETE,
                         taskCount = q4Count,
                         previewTasks = q4Preview,
                         modifier = Modifier.weight(1f),
-                        onClick = { backStack.navigate(AppRoutes.QuadrantDetail(4)) }
+                        onClick = { backStack.navigate(AppRoutes.QuadrantDetail(4)) },
+                        onTaskClick = { task -> backStack.navigate(AppRoutes.TaskDetail(task.id)) }
                     )
                 }
             }

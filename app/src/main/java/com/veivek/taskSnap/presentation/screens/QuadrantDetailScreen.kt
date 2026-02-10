@@ -38,6 +38,8 @@ import com.veivek.taskSnap.domain.model.Quadrant
 import com.veivek.taskSnap.presentation.components.EmptyQuadrantState
 import com.veivek.taskSnap.presentation.components.EnhancedAddTaskDialog
 import com.veivek.taskSnap.presentation.components.SwipeableTaskCard
+import com.veivek.taskSnap.presentation.navigation.AppRoutes
+import com.veivek.taskSnap.presentation.navigation.navigate
 import com.veivek.taskSnap.presentation.navigation.popOrStay
 import com.veivek.taskSnap.presentation.theme.Q1Container
 import com.veivek.taskSnap.presentation.theme.Q1Primary
@@ -151,7 +153,8 @@ fun QuadrantDetailScreen(
                         task = task,
                         onComplete = { viewModel.completeTask(task.id) },
                         onDelete = { viewModel.deleteTask(task.id) },
-                        quadrantColor = primaryColor
+                        quadrantColor = primaryColor,
+                        onClick = { backStack.navigate(AppRoutes.TaskDetail(task.id)) }
                     )
                 }
             }

@@ -10,8 +10,10 @@ import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
+import com.veivek.taskSnap.presentation.screens.CompletedTasksScreen
 import com.veivek.taskSnap.presentation.screens.EisenhowerMatrixScreen
 import com.veivek.taskSnap.presentation.screens.QuadrantDetailScreen
+import com.veivek.taskSnap.presentation.screens.TaskDetailScreen
 import com.veivek.taskSnap.presentation.viewmodel.TaskViewModel
 
 /**
@@ -45,8 +47,20 @@ fun Navigation() {
             }
 
             entry<AppRoutes.TaskDetail> {
-                // TODO: Implement task detail screen
-                androidx.compose.material3.Text("Task Detail: ${it.taskId}")
+                val viewModel: TaskViewModel = hiltViewModel()
+                TaskDetailScreen(
+                    taskId = it.taskId,
+                    backStack = backStack,
+                    viewModel = viewModel
+                )
+            }
+
+            entry<AppRoutes.CompletedTasks> {
+                 val viewModel: TaskViewModel = hiltViewModel()
+                 CompletedTasksScreen(
+                     backStack = backStack,
+                     viewModel = viewModel
+                 )
             }
 
             entry<AppRoutes.CreateTask> {
