@@ -5,14 +5,13 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.lifecycle.lifecycleScope
 import com.veivek.taskSnap.domain.model.Task
 import com.veivek.taskSnap.domain.model.TaskSource
 import com.veivek.taskSnap.domain.repository.TaskRepository
 import com.veivek.taskSnap.presentation.components.EnhancedAddTaskDialog
 import com.veivek.taskSnap.presentation.theme.TaskSnapTheme
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import java.util.UUID
 import javax.inject.Inject
@@ -33,8 +32,6 @@ class ProcessTextActivity : ComponentActivity() {
     companion object {
         private const val TAG = "ProcessTextActivity"
     }
-
-    private val coroutineScope = CoroutineScope(SupervisorJob())
 
     @Inject
     lateinit var repository: TaskRepository
@@ -58,7 +55,7 @@ class ProcessTextActivity : ComponentActivity() {
                     prefillTitle = text,
                     onDismiss = { finish() },
                     onSave = { title, description, isUrgent, isImportant ->
-                        coroutineScope.launch {
+                        lifecycleScope.launch {
                             repository.addTask(
                                 Task(
                                     id = UUID.randomUUID().toString(),

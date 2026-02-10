@@ -4,21 +4,19 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.lifecycle.lifecycleScope
 import com.veivek.taskSnap.domain.model.Task
 import com.veivek.taskSnap.domain.model.TaskSource
 import com.veivek.taskSnap.domain.repository.TaskRepository
 import com.veivek.taskSnap.presentation.components.EnhancedAddTaskDialog
 import com.veivek.taskSnap.presentation.theme.TaskSnapTheme
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import java.util.UUID
 import javax.inject.Inject
 
 /**
  * Floating overlay window that appears after a call ends.
- * This is the Truecaller-style popup that appears on top of everything.
  */
 @AndroidEntryPoint
 class CallEndedOverlayActivity : ComponentActivity() {
@@ -29,8 +27,6 @@ class CallEndedOverlayActivity : ComponentActivity() {
         const val EXTRA_CONTACT_NAME = "extra_contact_name"
         const val EXTRA_IS_INCOMING = "extra_is_incoming"
     }
-
-    private val coroutineScope = CoroutineScope(SupervisorJob())
 
     @Inject
     lateinit var repository: TaskRepository
@@ -52,7 +48,7 @@ class CallEndedOverlayActivity : ComponentActivity() {
                     prefillTitle = "Follow up: $displayName",
                     prefillDescription = "",
                     onSave = { title, description, isUrgent, isImportant ->
-                        coroutineScope.launch {
+                        lifecycleScope.launch {
                             repository.addTask(
                                 Task(
                                     id = UUID.randomUUID().toString(),
