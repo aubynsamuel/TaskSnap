@@ -1,7 +1,6 @@
 package com.veivek.taskSnap
 
 import android.Manifest
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -11,34 +10,17 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Card
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
-import com.veivek.taskSnap.data.local.TaskDatabase
+import androidx.core.content.edit
+import com.veivek.taskSnap.data.service.CallMonitorService
+import com.veivek.taskSnap.presentation.components.SetupWizardScreen
 import com.veivek.taskSnap.presentation.navigation.Navigation
-import com.veivek.taskSnap.service.CallMonitorService
-import com.veivek.taskSnap.ui.components.CallEndedDialog
-import com.veivek.taskSnap.ui.theme.TaskSnapTheme
-import com.veivek.taskSnap.utils.BatteryOptimizationHelper
-import com.veivek.taskSnap.utils.OverlayPermissionHelper
+import com.veivek.taskSnap.presentation.theme.TaskSnapTheme
+import com.veivek.taskSnap.presentation.utils.BatteryOptimizationHelper
+import com.veivek.taskSnap.presentation.utils.OverlayPermissionHelper
+import dagger.hilt.android.AndroidEntryPoint
 
 /**
  * Main Activity for TaskSnap MVP
@@ -48,6 +30,7 @@ import com.veivek.taskSnap.utils.OverlayPermissionHelper
  * - Explicit service start after permissions granted
  * - Verification that service is actually running
  */
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
     companion object {
@@ -56,15 +39,8 @@ class MainActivity : ComponentActivity() {
         private const val KEY_SETUP_COMPLETE = "setup_complete"
     }
 
-    // State for dialogs
-    private var callEndedData = mutableStateOf<CallEndedInfo?>(null)
+    // State for setup wizard
     private var showSetupWizard = mutableStateOf(false)
-
-    data class CallEndedInfo(
-        val phoneNumber: String?,
-        val contactName: String?,
-        val isIncoming: Boolean,
-    )
 
     // Permission launcher
     private val permissionLauncher = registerForActivityResult(
@@ -99,17 +75,6 @@ class MainActivity : ComponentActivity() {
 
         Log.d(TAG, "📱 MainActivity onCreate()")
 
-        // Set up callback for when service detects call ended
-        CallMonitorService.onCallEnded = { phoneNumber, contactName, isIncoming ->
-            Log.d(TAG, "📞 Call ended callback received: $phoneNumber, $contactName, $isIncoming")
-            runOnUiThread {
-                callEndedData.value = CallEndedInfo(phoneNumber, contactName, isIncoming)
-            }
-        }
-
-        // Handle intent from notification
-        handleIntent(intent)
-
         // Check if first launch
         val prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
         val setupComplete = prefs.getBoolean(KEY_SETUP_COMPLETE, false)
@@ -134,28 +99,10 @@ class MainActivity : ComponentActivity() {
                         }
                     )
                 } else {
-                    // Initialize database and navigation
-                    val database = TaskDatabase.getInstance(this)
-                    Navigation(database = database)
-                }
-
-                // Call ended dialog (fallback if overlay not shown)
-                val callEnded by callEndedData
-                callEnded?.let { info ->
-                    CallEndedDialog(
-                        phoneNumber = info.phoneNumber,
-                        contactName = info.contactName,
-                        isIncoming = info.isIncoming,
-                        onDismiss = { callEndedData.value = null }
-                    )
+                    Navigation()
                 }
             }
         }
-    }
-
-    override fun onNewIntent(intent: Intent) {
-        super.onNewIntent(intent)
-        handleIntent(intent)
     }
 
     override fun onResume() {
@@ -175,17 +122,6 @@ class MainActivity : ComponentActivity() {
                 // User granted overlay but not battery - ask for battery
                 checkAndRequestBatteryOptimization()
             }
-        }
-    }
-
-    private fun handleIntent(intent: Intent?) {
-        if (intent?.action == CallMonitorService.ACTION_CALL_ENDED) {
-            val phoneNumber = intent.getStringExtra(CallMonitorService.EXTRA_PHONE_NUMBER)
-            val contactName = intent.getStringExtra(CallMonitorService.EXTRA_CONTACT_NAME)
-            val isIncoming = intent.getBooleanExtra(CallMonitorService.EXTRA_IS_INCOMING, false)
-
-            Log.d(TAG, "📞 Received call ended intent: $phoneNumber, $contactName")
-            callEndedData.value = CallEndedInfo(phoneNumber, contactName, isIncoming)
         }
     }
 
@@ -250,7 +186,7 @@ class MainActivity : ComponentActivity() {
 
         // Mark setup as complete
         val prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
-        prefs.edit().putBoolean(KEY_SETUP_COMPLETE, true).apply()
+        prefs.edit { putBoolean(KEY_SETUP_COMPLETE, true) }
         Log.d(TAG, "💾 Setup completion saved to SharedPreferences")
 
         // Start the service
@@ -305,103 +241,5 @@ class MainActivity : ComponentActivity() {
         Log.d(TAG, "💀 MainActivity onDestroy()")
         CallMonitorService.onCallEnded = null
         // Note: We don't stop the service - it should keep running
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun SetupWizardScreen(onComplete: () -> Unit) {
-    Scaffold(
-        topBar = {
-            TopAppBar(title = { Text("TaskSnap Setup") })
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Spacer(modifier = Modifier.height(32.dp))
-
-            Text(
-                text = "📞",
-                style = MaterialTheme.typography.displayLarge
-            )
-
-            Text(
-                text = "Welcome to TaskSnap",
-                style = MaterialTheme.typography.headlineMedium
-            )
-
-            Text(
-                text = "To work like Truecaller, TaskSnap needs a few permissions:",
-                style = MaterialTheme.typography.bodyLarge
-            )
-
-            Card(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    PermissionItem(
-                        icon = "📞",
-                        title = "Phone",
-                        description = "Detect when calls end"
-                    )
-                    PermissionItem(
-                        icon = "👤",
-                        title = "Contacts",
-                        description = "Show who you called"
-                    )
-                    PermissionItem(
-                        icon = "🔔",
-                        title = "Notifications",
-                        description = "Background monitoring"
-                    )
-                    PermissionItem(
-                        icon = "💬",
-                        title = "Display over apps",
-                        description = "Show popup after calls"
-                    )
-                    PermissionItem(
-                        icon = "🔋",
-                        title = "Battery optimization",
-                        description = "Reliable background operation"
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.weight(1f))
-
-            Text(
-                text = "The app will start automatically after setup",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    }
-}
-
-@Composable
-fun PermissionItem(icon: String, title: String, description: String) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(text = icon, style = MaterialTheme.typography.headlineMedium)
-        Column {
-            Text(text = title, style = MaterialTheme.typography.titleMedium)
-            Text(
-                text = description,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
     }
 }

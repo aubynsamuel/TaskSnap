@@ -8,23 +8,18 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -37,16 +32,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import com.veivek.taskSnap.ui.theme.Q1Primary
-import com.veivek.taskSnap.ui.theme.Q2Primary
-import com.veivek.taskSnap.ui.theme.Q3Primary
-import com.veivek.taskSnap.ui.theme.Q4Primary
+import com.veivek.taskSnap.presentation.theme.Q1Primary
+import com.veivek.taskSnap.presentation.theme.Q2Primary
+import com.veivek.taskSnap.presentation.theme.Q3Primary
+import com.veivek.taskSnap.presentation.theme.Q4Primary
 
 /**
  * Enhanced dialog for adding a new task.
@@ -58,11 +53,16 @@ fun EnhancedAddTaskDialog(
     onSave: (title: String, description: String, isUrgent: Boolean, isImportant: Boolean) -> Unit,
     prefillTitle: String = "",
     prefillDescription: String = "",
+    prefillIsUrgent: Boolean = false,
+    prefillIsImportant: Boolean = false,
+    dialogTitle: String = "Create New Task",
+    confirmButtonText: String = "Create Task",
+    subTitle: String? = null,
 ) {
     var title by remember { mutableStateOf(prefillTitle) }
     var description by remember { mutableStateOf(prefillDescription) }
-    var isUrgent by remember { mutableStateOf(false) }
-    var isImportant by remember { mutableStateOf(false) }
+    var isUrgent by remember { mutableStateOf(prefillIsUrgent) }
+    var isImportant by remember { mutableStateOf(prefillIsImportant) }
 
     val quadrantColor = when {
         isUrgent && isImportant -> Q1Primary
@@ -101,11 +101,17 @@ fun EnhancedAddTaskDialog(
             ) {
                 // Header
                 Text(
-                    text = "✨ Create New Task",
+                    text = "✨ $dialogTitle",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
+                if (subTitle != null) {
+                    Text(
+                        text = subTitle,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
 
                 // Title input
                 OutlinedTextField(
@@ -114,7 +120,11 @@ fun EnhancedAddTaskDialog(
                     label = { Text("Task Title") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(12.dp),
+                    keyboardOptions = KeyboardOptions(
+                        capitalization = KeyboardCapitalization.Words,
+                        imeAction = ImeAction.Next
+                    ),
                 )
 
                 // Description input
@@ -126,7 +136,11 @@ fun EnhancedAddTaskDialog(
                         .fillMaxWidth()
                         .height(120.dp),
                     maxLines = 4,
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(12.dp),
+                    keyboardOptions = KeyboardOptions(
+                        capitalization = KeyboardCapitalization.Sentences,
+                        imeAction = ImeAction.Done
+                    )
                 )
 
                 // Priority toggles
@@ -223,76 +237,8 @@ fun EnhancedAddTaskDialog(
                         enabled = title.isNotBlank(),
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        Text("Create Task")
+                        Text(confirmButtonText)
                     }
-                }
-            }
-        }
-    }
-}
-
-/**
- * Reusable priority toggle component.
- */
-@Composable
-fun PriorityToggle(
-    label: String,
-    description: String,
-    isSelected: Boolean,
-    onToggle: () -> Unit,
-    color: Color,
-) {
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onToggle),
-        shape = RoundedCornerShape(12.dp),
-        color = if (isSelected) color.copy(alpha = 0.1f) else MaterialTheme.colorScheme.surfaceVariant,
-        border = androidx.compose.foundation.BorderStroke(
-            width = 2.dp,
-            color = if (isSelected) color else Color.Transparent
-        )
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = label,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                    color = if (isSelected) color else MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    text = description,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            Spacer(modifier = Modifier.width(12.dp))
-
-            // Checkbox
-            Box(
-                modifier = Modifier
-                    .size(28.dp)
-                    .clip(CircleShape)
-                    .background(
-                        if (isSelected) color else MaterialTheme.colorScheme.outline.copy(
-                            alpha = 0.3f
-                        )
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                if (isSelected) {
-                    Icon(
-                        imageVector = Icons.Default.Check,
-                        contentDescription = "Selected",
-                        tint = Color.White,
-                        modifier = Modifier.size(18.dp)
-                    )
                 }
             }
         }

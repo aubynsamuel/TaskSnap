@@ -1,6 +1,7 @@
-package com.veivek.taskSnap.service
+package com.veivek.taskSnap.data.service
 
 import android.Manifest
+import android.R
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -11,8 +12,10 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.IBinder
+import android.provider.CallLog
 import android.provider.ContactsContract
 import android.telephony.PhoneStateListener
 import android.telephony.TelephonyCallback
@@ -22,8 +25,8 @@ import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.veivek.taskSnap.MainActivity
-import com.veivek.taskSnap.ui.overlay.CallEndedOverlay
-import com.veivek.taskSnap.utils.OverlayPermissionHelper
+import com.veivek.taskSnap.taskActivities.CallEndedOverlayActivity
+import dagger.hilt.android.AndroidEntryPoint
 
 /**
  * Foreground Service for reliable call state monitoring.
@@ -33,6 +36,7 @@ import com.veivek.taskSnap.utils.OverlayPermissionHelper
  * - Uses both TelephonyCallback (Android 12+) and PhoneStateListener (older)
  * - Keeps service running to ensure calls are always detected
  */
+@AndroidEntryPoint
 class CallMonitorService : Service() {
 
     companion object {
@@ -59,11 +63,7 @@ class CallMonitorService : Service() {
                 action = ACTION_START
             }
             try {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    context.startForegroundService(intent)
-                } else {
-                    context.startService(intent)
-                }
+                context.startForegroundService(intent)
                 Log.d(TAG, "✅ Service start requested")
             } catch (e: Exception) {
                 Log.e(TAG, "❌ Failed to start service", e)
@@ -88,11 +88,6 @@ class CallMonitorService : Service() {
     private var isIncoming = false
     private var lastPhoneNumber: String? = null
     private var isMonitoring = false
-
-    // Call duration tracking
-    private var callStartTime: Long = 0
-    private var callAnsweredTime: Long = 0
-    private val MIN_CALL_DURATION_MS = 3000 // Only show overlay for calls longer than 3 seconds
 
     override fun onCreate() {
         super.onCreate()
@@ -136,19 +131,17 @@ class CallMonitorService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     private fun createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                CHANNEL_ID,
-                "Call Monitor",
-                NotificationManager.IMPORTANCE_LOW
-            ).apply {
-                description = "Monitors calls to create follow-up tasks"
-                setShowBadge(false)
-            }
-            val notificationManager = getSystemService(NotificationManager::class.java)
-            notificationManager.createNotificationChannel(channel)
-            Log.d(TAG, "✅ Notification channel created")
+        val channel = NotificationChannel(
+            CHANNEL_ID,
+            "Call Monitor",
+            NotificationManager.IMPORTANCE_LOW
+        ).apply {
+            description = "Monitors calls to create follow-up tasks"
+            setShowBadge(false)
         }
+        val notificationManager = getSystemService(NotificationManager::class.java)
+        notificationManager.createNotificationChannel(channel)
+        Log.d(TAG, "✅ Notification channel created")
     }
 
     private fun createNotification(): Notification {
@@ -162,7 +155,7 @@ class CallMonitorService : Service() {
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("TaskSnap Active")
             .setContentText("Monitoring calls for task creation")
-            .setSmallIcon(android.R.drawable.ic_menu_call)
+            .setSmallIcon(R.drawable.ic_menu_call)
             .setOngoing(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setContentIntent(pendingIntent)
@@ -183,7 +176,7 @@ class CallMonitorService : Service() {
             return
         }
 
-        telephonyManager = getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
+        telephonyManager = getSystemService(TELEPHONY_SERVICE) as TelephonyManager
 
         // Strategy 1: Register dynamic broadcast receiver (works on Android 9+)
         registerDynamicPhoneStateReceiver()
@@ -303,16 +296,14 @@ class CallMonitorService : Service() {
                     TelephonyManager.CALL_STATE_IDLE -> {
                         // Outgoing call started
                         isIncoming = false
-                        callStartTime = System.currentTimeMillis()
-                        Log.d(TAG, "📞 IDLE→OFFHOOK → Outgoing call started at $callStartTime")
+                        Log.d(TAG, "📞 IDLE→OFFHOOK → Outgoing call started at")
                     }
 
                     TelephonyManager.CALL_STATE_RINGING -> {
                         // Incoming call was answered
-                        callAnsweredTime = System.currentTimeMillis()
                         Log.d(
                             TAG,
-                            "📞 RINGING→OFFHOOK → Incoming call answered at $callAnsweredTime"
+                            "📞 RINGING→OFFHOOK → Incoming call answered"
                         )
                     }
 
@@ -325,34 +316,15 @@ class CallMonitorService : Service() {
             TelephonyManager.CALL_STATE_IDLE -> {
                 when (previousState) {
                     TelephonyManager.CALL_STATE_OFFHOOK -> {
-                        // Call ended - check if it was answered and duration
-                        val callDuration =
-                            System.currentTimeMillis() - maxOf(callStartTime, callAnsweredTime)
-                        val wasAnswered = callAnsweredTime > 0 || callStartTime > 0
-
                         Log.d(
                             TAG,
-                            "📞 OFFHOOK→IDLE → Call ended. Duration: ${callDuration}ms, Answered: $wasAnswered"
+                            "📞 OFFHOOK→IDLE → Call ended"
                         )
-
-                        // Only trigger overlay for answered calls with minimum duration
-                        if (wasAnswered && callDuration >= MIN_CALL_DURATION_MS) {
-                            Log.d(TAG, "✅ Call qualifies for task creation prompt")
-                            handleCallEnded()
-                        } else {
-                            Log.d(TAG, "⏭️ Skipping overlay - call too short or not answered")
-                        }
-
-                        // Reset call tracking
-                        callStartTime = 0
-                        callAnsweredTime = 0
+                        handleCallEnded()
                     }
 
                     TelephonyManager.CALL_STATE_RINGING -> {
                         Log.d(TAG, "📞 RINGING→IDLE → Missed call (not answered) - NO OVERLAY")
-                        // Reset tracking
-                        callStartTime = 0
-                        callAnsweredTime = 0
                     }
 
                     else -> {
@@ -385,18 +357,21 @@ class CallMonitorService : Service() {
         // Notify via callback (for when app is visible)
         onCallEnded?.invoke(phoneNumber, contactName, isIncoming)
 
-        // Show overlay window (Truecaller-style popup)
-        if (OverlayPermissionHelper.hasOverlayPermission(this)) {
-            try {
-                val overlay = CallEndedOverlay(applicationContext)
-                overlay.show(phoneNumber, contactName, isIncoming)
-                Log.d(TAG, "✅ Overlay window shown")
-            } catch (e: Exception) {
-                Log.e(TAG, "❌ Failed to show overlay, falling back to notification", e)
-                showCallEndedNotification(phoneNumber, contactName, isIncoming)
-            }
-        } else {
-            Log.w(TAG, "⚠️ No overlay permission, showing notification instead")
+        val overlayIntent = Intent(this, CallEndedOverlayActivity::class.java).apply {
+            putExtra(CallEndedOverlayActivity.EXTRA_PHONE_NUMBER, phoneNumber)
+            putExtra(CallEndedOverlayActivity.EXTRA_CONTACT_NAME, contactName)
+            putExtra(CallEndedOverlayActivity.EXTRA_IS_INCOMING, isIncoming)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) // Required for starting Activity from a non-Activity context
+        }
+        try {
+            startActivity(overlayIntent)
+            Log.d(TAG, "✅ CallEndedOverlayActivity started")
+        } catch (e: Exception) {
+            Log.e(
+                TAG,
+                "❌ Failed to start CallEndedOverlayActivity, falling back to notification",
+                e
+            )
             showCallEndedNotification(phoneNumber, contactName, isIncoming)
         }
 
@@ -430,13 +405,13 @@ class CallMonitorService : Service() {
 
         return try {
             val cursor = contentResolver.query(
-                android.provider.CallLog.Calls.CONTENT_URI,
+                CallLog.Calls.CONTENT_URI,
                 arrayOf(
-                    android.provider.CallLog.Calls.NUMBER,
-                    android.provider.CallLog.Calls.DATE
+                    CallLog.Calls.NUMBER,
+                    CallLog.Calls.DATE
                 ),
                 null, null,
-                "${android.provider.CallLog.Calls.DATE} DESC"
+                "${CallLog.Calls.DATE} DESC"
             )
             cursor?.use {
                 if (it.moveToFirst()) {
@@ -464,9 +439,9 @@ class CallMonitorService : Service() {
         }
 
         return try {
-            val uri = android.net.Uri.withAppendedPath(
+            val uri = Uri.withAppendedPath(
                 ContactsContract.PhoneLookup.CONTENT_FILTER_URI,
-                android.net.Uri.encode(phoneNumber)
+                Uri.encode(phoneNumber)
             )
             contentResolver.query(
                 uri,
@@ -516,7 +491,7 @@ class CallMonitorService : Service() {
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("📞 Create task after call?")
             .setContentText("$callType call with $displayName ended")
-            .setSmallIcon(android.R.drawable.ic_menu_call)
+            .setSmallIcon(R.drawable.ic_menu_call)
             .setAutoCancel(true)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setContentIntent(pendingIntent)

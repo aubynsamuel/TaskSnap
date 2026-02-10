@@ -1,4 +1,4 @@
-package com.veivek.taskSnap.ui.theme
+package com.veivek.taskSnap.presentation.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle

@@ -5,32 +5,23 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.retain.retain
 import androidx.compose.ui.Modifier
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
-import com.veivek.taskSnap.data.local.TaskDatabase
-import com.veivek.taskSnap.data.repository.TaskRepositoryImpl
-import com.veivek.taskSnap.domain.repository.TaskRepository
-import com.veivek.taskSnap.presentation.matrix.EisenhowerMatrixScreen
-import com.veivek.taskSnap.presentation.matrix.TaskViewModel
-import com.veivek.taskSnap.presentation.quadrant.QuadrantDetailScreen
+import com.veivek.taskSnap.presentation.screens.CompletedTasksScreen
+import com.veivek.taskSnap.presentation.screens.EisenhowerMatrixScreen
+import com.veivek.taskSnap.presentation.screens.QuadrantDetailScreen
+import com.veivek.taskSnap.presentation.screens.TaskDetailScreen
+import com.veivek.taskSnap.presentation.viewmodel.TaskViewModel
 
 /**
  * Main navigation component for TaskSnap.
  * Uses Navigation 3 library with type-safe routes.
  */
 @Composable
-fun Navigation(
-    database: TaskDatabase,
-) {
-    // Initialize repository
-    val repository: TaskRepository = TaskRepositoryImpl(database.taskDao())
-
-    // Create ViewModel (in production, use proper DI)
-    val viewModel = TaskViewModel(repository)
-
-    // Create navigation backstack starting at Eisenhower Matrix
+fun Navigation() {
     val backStack = retain { NavBackStack<NavKey>(AppRoutes.EisenhowerMatrix) }
 
     NavDisplay(
@@ -39,6 +30,7 @@ fun Navigation(
         modifier = Modifier.background(MaterialTheme.colorScheme.background),
         entryProvider = entryProvider {
             entry<AppRoutes.EisenhowerMatrix> {
+                val viewModel: TaskViewModel = hiltViewModel()
                 EisenhowerMatrixScreen(
                     backStack = backStack,
                     viewModel = viewModel
@@ -46,17 +38,29 @@ fun Navigation(
             }
 
             entry<AppRoutes.QuadrantDetail> {
+                val viewModel: TaskViewModel = hiltViewModel()
                 QuadrantDetailScreen(
                     quadrantNumber = it.quadrant,
                     backStack = backStack,
-                    viewModel = viewModel,
-                    repository = repository
+                    viewModel = viewModel
                 )
             }
 
             entry<AppRoutes.TaskDetail> {
-                // TODO: Implement task detail screen
-                androidx.compose.material3.Text("Task Detail: ${it.taskId}")
+                val viewModel: TaskViewModel = hiltViewModel()
+                TaskDetailScreen(
+                    taskId = it.taskId,
+                    backStack = backStack,
+                    viewModel = viewModel
+                )
+            }
+
+            entry<AppRoutes.CompletedTasks> {
+                 val viewModel: TaskViewModel = hiltViewModel()
+                 CompletedTasksScreen(
+                     backStack = backStack,
+                     viewModel = viewModel
+                 )
             }
 
             entry<AppRoutes.CreateTask> {

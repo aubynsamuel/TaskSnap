@@ -1,28 +1,15 @@
-package com.veivek.taskSnap.presentation.matrix
+package com.veivek.taskSnap.presentation.screens
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -34,10 +21,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -45,31 +30,18 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import com.veivek.taskSnap.domain.model.Quadrant
 import com.veivek.taskSnap.presentation.components.EnhancedAddTaskDialog
+import com.veivek.taskSnap.presentation.components.QuadrantCard
 import com.veivek.taskSnap.presentation.navigation.AppRoutes
 import com.veivek.taskSnap.presentation.navigation.navigate
-import com.veivek.taskSnap.ui.theme.Q1Container
-import com.veivek.taskSnap.ui.theme.Q1Primary
-import com.veivek.taskSnap.ui.theme.Q1Secondary
-import com.veivek.taskSnap.ui.theme.Q2Container
-import com.veivek.taskSnap.ui.theme.Q2Primary
-import com.veivek.taskSnap.ui.theme.Q2Secondary
-import com.veivek.taskSnap.ui.theme.Q3Container
-import com.veivek.taskSnap.ui.theme.Q3Primary
-import com.veivek.taskSnap.ui.theme.Q3Secondary
-import com.veivek.taskSnap.ui.theme.Q4Container
-import com.veivek.taskSnap.ui.theme.Q4Primary
-import com.veivek.taskSnap.ui.theme.Q4Secondary
+import com.veivek.taskSnap.presentation.viewmodel.MatrixUiState
+import com.veivek.taskSnap.presentation.viewmodel.TaskViewModel
 
 /**
  * Eisenhower Matrix Screen - Main screen showing 4-quadrant grid.
@@ -85,6 +57,12 @@ fun EisenhowerMatrixScreen(
     val q2Count by viewModel.q2Count.collectAsState()
     val q3Count by viewModel.q3Count.collectAsState()
     val q4Count by viewModel.q4Count.collectAsState()
+
+    val q1Preview by viewModel.q1PreviewTasks.collectAsState()
+    val q2Preview by viewModel.q2PreviewTasks.collectAsState()
+    val q3Preview by viewModel.q3PreviewTasks.collectAsState()
+    val q4Preview by viewModel.q4PreviewTasks.collectAsState()
+
     val uiState by viewModel.uiState.collectAsState()
 
     val snackbarHostState = remember { SnackbarHostState() }
@@ -116,14 +94,13 @@ fun EisenhowerMatrixScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = { backStack.navigate(AppRoutes.CompletedTasks) }) {
+                        Icon(Icons.Default.List, contentDescription = "Completed Tasks")
+                    }
                     IconButton(onClick = { backStack.navigate(AppRoutes.Settings) }) {
                         Icon(Icons.Default.Settings, contentDescription = "Settings")
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface
-                )
+                }
             )
         },
         floatingActionButton = {
@@ -187,14 +164,18 @@ fun EisenhowerMatrixScreen(
                     QuadrantCard(
                         quadrant = Quadrant.Q1_DO_FIRST,
                         taskCount = q1Count,
+                        previewTasks = q1Preview,
                         modifier = Modifier.weight(1f),
-                        onClick = { backStack.navigate(AppRoutes.QuadrantDetail(1)) }
+                        onClick = { backStack.navigate(AppRoutes.QuadrantDetail(1)) },
+                        onTaskClick = { task -> backStack.navigate(AppRoutes.TaskDetail(task.id)) }
                     )
                     QuadrantCard(
                         quadrant = Quadrant.Q2_SCHEDULE,
                         taskCount = q2Count,
+                        previewTasks = q2Preview,
                         modifier = Modifier.weight(1f),
-                        onClick = { backStack.navigate(AppRoutes.QuadrantDetail(2)) }
+                        onClick = { backStack.navigate(AppRoutes.QuadrantDetail(2)) },
+                        onTaskClick = { task -> backStack.navigate(AppRoutes.TaskDetail(task.id)) }
                     )
                 }
 
@@ -208,14 +189,18 @@ fun EisenhowerMatrixScreen(
                     QuadrantCard(
                         quadrant = Quadrant.Q3_DELEGATE,
                         taskCount = q3Count,
+                        previewTasks = q3Preview,
                         modifier = Modifier.weight(1f),
-                        onClick = { backStack.navigate(AppRoutes.QuadrantDetail(3)) }
+                        onClick = { backStack.navigate(AppRoutes.QuadrantDetail(3)) },
+                        onTaskClick = { task -> backStack.navigate(AppRoutes.TaskDetail(task.id)) }
                     )
                     QuadrantCard(
                         quadrant = Quadrant.Q4_DELETE,
                         taskCount = q4Count,
+                        previewTasks = q4Preview,
                         modifier = Modifier.weight(1f),
-                        onClick = { backStack.navigate(AppRoutes.QuadrantDetail(4)) }
+                        onClick = { backStack.navigate(AppRoutes.QuadrantDetail(4)) },
+                        onTaskClick = { task -> backStack.navigate(AppRoutes.TaskDetail(task.id)) }
                     )
                 }
             }
@@ -238,108 +223,3 @@ fun EisenhowerMatrixScreen(
         )
     }
 }
-
-@Composable
-fun QuadrantCard(
-    quadrant: Quadrant,
-    taskCount: Int,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit,
-) {
-    val (primaryColor, secondaryColor, containerColor) = when (quadrant) {
-        Quadrant.Q1_DO_FIRST -> Triple(Q1Primary, Q1Secondary, Q1Container)
-        Quadrant.Q2_SCHEDULE -> Triple(Q2Primary, Q2Secondary, Q2Container)
-        Quadrant.Q3_DELEGATE -> Triple(Q3Primary, Q3Secondary, Q3Container)
-        Quadrant.Q4_DELETE -> Triple(Q4Primary, Q4Secondary, Q4Container)
-    }
-
-    val emoji = when (quadrant) {
-        Quadrant.Q1_DO_FIRST -> "🔥"
-        Quadrant.Q2_SCHEDULE -> "📅"
-        Quadrant.Q3_DELEGATE -> "👥"
-        Quadrant.Q4_DELETE -> "🗑️"
-    }
-
-    Card(
-        modifier = modifier
-            .fillMaxSize()
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(20.dp),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 4.dp,
-            pressedElevation = 8.dp
-        ),
-        colors = CardDefaults.cardColors(
-            containerColor = containerColor
-        )
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(
-                            containerColor,
-                            containerColor.copy(alpha = 0.7f)
-                        )
-                    )
-                )
-                .padding(16.dp)
-        ) {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.SpaceBetween
-            ) {
-                // Header
-                Column {
-                    Text(
-                        text = emoji,
-                        style = MaterialTheme.typography.displaySmall
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = quadrant.displayName,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = primaryColor
-                    )
-                    Text(
-                        text = quadrant.description,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = primaryColor.copy(alpha = 0.7f)
-                    )
-                }
-
-                // Task count badge
-                AnimatedVisibility(
-                    visible = taskCount > 0,
-                    enter = scaleIn(spring(stiffness = Spring.StiffnessHigh)) + fadeIn(),
-                    exit = scaleOut() + fadeOut()
-                ) {
-                    Surface(
-                        modifier = Modifier.align(Alignment.End),
-                        shape = CircleShape,
-                        color = primaryColor,
-                        shadowElevation = 4.dp
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(48.dp)
-                                .padding(8.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = taskCount.toString(),
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White,
-                                textAlign = TextAlign.Center
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-

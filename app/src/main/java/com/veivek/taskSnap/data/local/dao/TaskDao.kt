@@ -130,4 +130,18 @@ interface TaskDao {
 
     @Query("SELECT COUNT(*) FROM tasks WHERE isUrgent = :isUrgent AND isImportant = :isImportant AND isCompleted = 0")
     fun observeQuadrantTaskCount(isUrgent: Boolean, isImportant: Boolean): Flow<Int>
+
+    @Query(
+        """
+        SELECT * FROM tasks 
+        WHERE isUrgent = :isUrgent AND isImportant = :isImportant AND isCompleted = 0 
+        ORDER BY createdTimestamp DESC
+        LIMIT :limit
+    """
+    )
+    fun observeQuadrantTasks(
+        isUrgent: Boolean,
+        isImportant: Boolean,
+        limit: Int,
+    ): Flow<List<TaskEntity>>
 }

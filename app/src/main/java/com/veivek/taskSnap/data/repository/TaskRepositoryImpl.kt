@@ -99,6 +99,36 @@ class TaskRepositoryImpl(
         }
     }
 
+    override fun observeQuadrantTasks(quadrant: Quadrant, limit: Int): Flow<List<Task>> {
+        return when (quadrant) {
+            Quadrant.Q1_DO_FIRST -> taskDao.observeQuadrantTasks(
+                isUrgent = true,
+                isImportant = true,
+                limit = limit
+            )
+
+            Quadrant.Q2_SCHEDULE -> taskDao.observeQuadrantTasks(
+                isUrgent = false,
+                isImportant = true,
+                limit = limit
+            )
+
+            Quadrant.Q3_DELEGATE -> taskDao.observeQuadrantTasks(
+                isUrgent = true,
+                isImportant = false,
+                limit = limit
+            )
+
+            Quadrant.Q4_DELETE -> taskDao.observeQuadrantTasks(
+                isUrgent = false,
+                isImportant = false,
+                limit = limit
+            )
+        }.map { entities ->
+            entities.map { it.toDomain() }
+        }
+    }
+
     override suspend fun updateTask(task: Task): Result<Unit> {
         return try {
             val entity = TaskEntity.fromDomain(task)
