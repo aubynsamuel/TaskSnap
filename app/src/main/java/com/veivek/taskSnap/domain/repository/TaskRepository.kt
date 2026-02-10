@@ -21,6 +21,7 @@ interface TaskRepository {
     fun observeTasksByQuadrant(quadrant: Quadrant): Flow<List<Task>>
     fun searchTasks(query: String): Flow<List<Task>>
     fun observeQuadrantTaskCount(quadrant: Quadrant): Flow<Int>
+    fun observeQuadrantTasks(quadrant: Quadrant, limit: Int): Flow<List<Task>>
 
     // Update
     suspend fun updateTask(task: Task): Result<Unit>

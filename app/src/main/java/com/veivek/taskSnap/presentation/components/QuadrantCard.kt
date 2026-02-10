@@ -30,33 +30,36 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.veivek.taskSnap.domain.model.Quadrant
+import com.veivek.taskSnap.domain.model.Task
 import com.veivek.taskSnap.presentation.theme.Q1Container
+import com.veivek.taskSnap.presentation.theme.Q1OnContainer
 import com.veivek.taskSnap.presentation.theme.Q1Primary
-import com.veivek.taskSnap.presentation.theme.Q1Secondary
 import com.veivek.taskSnap.presentation.theme.Q2Container
+import com.veivek.taskSnap.presentation.theme.Q2OnContainer
 import com.veivek.taskSnap.presentation.theme.Q2Primary
-import com.veivek.taskSnap.presentation.theme.Q2Secondary
 import com.veivek.taskSnap.presentation.theme.Q3Container
+import com.veivek.taskSnap.presentation.theme.Q3OnContainer
 import com.veivek.taskSnap.presentation.theme.Q3Primary
-import com.veivek.taskSnap.presentation.theme.Q3Secondary
 import com.veivek.taskSnap.presentation.theme.Q4Container
+import com.veivek.taskSnap.presentation.theme.Q4OnContainer
 import com.veivek.taskSnap.presentation.theme.Q4Primary
-import com.veivek.taskSnap.presentation.theme.Q4Secondary
 
 @Composable
 fun QuadrantCard(
     quadrant: Quadrant,
     taskCount: Int,
+    previewTasks: List<Task>,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
-    val (primaryColor, _, containerColor) = when (quadrant) {
-        Quadrant.Q1_DO_FIRST -> Triple(Q1Primary, Q1Secondary, Q1Container)
-        Quadrant.Q2_SCHEDULE -> Triple(Q2Primary, Q2Secondary, Q2Container)
-        Quadrant.Q3_DELEGATE -> Triple(Q3Primary, Q3Secondary, Q3Container)
-        Quadrant.Q4_DELETE -> Triple(Q4Primary, Q4Secondary, Q4Container)
+    val (primaryColor, containerColor, _) = when (quadrant) {
+        Quadrant.Q1_DO_FIRST -> Triple(Q1Primary, Q1Container, Q1OnContainer)
+        Quadrant.Q2_SCHEDULE -> Triple(Q2Primary, Q2Container, Q2OnContainer)
+        Quadrant.Q3_DELEGATE -> Triple(Q3Primary, Q3Container, Q3OnContainer)
+        Quadrant.Q4_DELETE -> Triple(Q4Primary, Q4Container, Q4OnContainer)
     }
 
     val emoji = when (quadrant) {
@@ -75,7 +78,8 @@ fun QuadrantCard(
             pressedElevation = 8.dp
         ),
         colors = CardDefaults.cardColors(
-            containerColor = containerColor.compositeOver(primaryColor)
+            containerColor = containerColor.compositeOver(primaryColor),
+            contentColor = MaterialTheme.colorScheme.background.copy(alpha = 0.7f)
         )
     ) {
         Column(
@@ -91,18 +95,52 @@ fun QuadrantCard(
                     text = emoji,
                     style = MaterialTheme.typography.displaySmall
                 )
+
                 Spacer(modifier = Modifier.height(8.dp))
+
                 Text(
                     text = quadrant.displayName,
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = primaryColor
                 )
+
                 Text(
                     text = quadrant.description,
                     style = MaterialTheme.typography.bodySmall,
                     color = primaryColor.copy(alpha = 0.7f)
                 )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Task Previews
+                if (previewTasks.isNotEmpty()) {
+                    previewTasks.forEach { task ->
+                        Text(
+                            text = "• ${task.title}",
+                            style = MaterialTheme.typography.bodySmall,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+
+                    if (taskCount > previewTasks.size) {
+                        Text(
+                            text = "+ ${taskCount - previewTasks.size} more",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    }
+                } else {
+                    Text(
+                        text = "No tasks",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.background.copy(alpha = 0.7f),
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
             }
 
             // Task count badge

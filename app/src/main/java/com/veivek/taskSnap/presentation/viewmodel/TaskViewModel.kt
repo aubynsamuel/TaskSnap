@@ -41,6 +41,19 @@ class TaskViewModel @Inject constructor(
     val q4Count = repository.observeQuadrantTaskCount(Quadrant.Q4_DELETE)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
 
+    // Task previews for each quadrant (Top 3)
+    val q1PreviewTasks = repository.observeQuadrantTasks(Quadrant.Q1_DO_FIRST, 3)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val q2PreviewTasks = repository.observeQuadrantTasks(Quadrant.Q2_SCHEDULE, 3)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val q3PreviewTasks = repository.observeQuadrantTasks(Quadrant.Q3_DELEGATE, 3)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val q4PreviewTasks = repository.observeQuadrantTasks(Quadrant.Q4_DELETE, 3)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     // All active tasks
     val allTasks = repository.observeAllActiveTasks()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -77,7 +90,8 @@ class TaskViewModel @Inject constructor(
         isUrgent: Boolean,
         isImportant: Boolean,
         source: TaskSource = TaskSource.MANUAL,
-        relatedContact: String? = null,
+        relatedContactName: String? = null,
+        relatedContactPhoneNumber: String? = null,
     ) {
         viewModelScope.launch {
             _uiState.value = MatrixUiState.Loading
@@ -91,7 +105,8 @@ class TaskViewModel @Inject constructor(
                 createdTimestamp = System.currentTimeMillis(),
                 lastModified = System.currentTimeMillis(),
                 source = source,
-                relatedContact = relatedContact,
+                relatedContactName = relatedContactName,
+                relatedContactPhoneNumber = relatedContactPhoneNumber,
                 assignedTo = null,
                 isSynced = false,
                 cloudId = null,

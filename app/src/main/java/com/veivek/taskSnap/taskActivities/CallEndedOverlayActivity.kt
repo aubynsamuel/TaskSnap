@@ -44,8 +44,10 @@ class CallEndedOverlayActivity : ComponentActivity() {
         setContent {
             TaskSnapTheme {
                 EnhancedAddTaskDialog(
+                    dialogTitle = "Create Task After Call",
+                    subTitle = "$contactName ($phoneNumber)",
                     onDismiss = { finish() },
-                    prefillTitle = "Follow up: $displayName",
+                    prefillTitle = "",
                     prefillDescription = "",
                     onSave = { title, description, isUrgent, isImportant ->
                         lifecycleScope.launch {
@@ -59,7 +61,8 @@ class CallEndedOverlayActivity : ComponentActivity() {
                                     createdTimestamp = System.currentTimeMillis(),
                                     lastModified = System.currentTimeMillis(),
                                     source = TaskSource.CALL_ENDED,
-                                    relatedContact = contactName,
+                                    relatedContactName = contactName,
+                                    relatedContactPhoneNumber = phoneNumber,
                                     assignedTo = null,
                                     isSynced = false,
                                     cloudId = null,

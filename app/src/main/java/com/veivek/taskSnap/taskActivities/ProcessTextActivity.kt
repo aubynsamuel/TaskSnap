@@ -52,7 +52,8 @@ class ProcessTextActivity : ComponentActivity() {
         setContent {
             TaskSnapTheme {
                 EnhancedAddTaskDialog(
-                    prefillTitle = text,
+                    prefillTitle = "",
+                    prefillDescription = text,
                     onDismiss = { finish() },
                     onSave = { title, description, isUrgent, isImportant ->
                         lifecycleScope.launch {
@@ -66,7 +67,8 @@ class ProcessTextActivity : ComponentActivity() {
                                     createdTimestamp = System.currentTimeMillis(),
                                     lastModified = System.currentTimeMillis(),
                                     source = TaskSource.SHARE_INTENT,
-                                    relatedContact = null,
+                                    relatedContactName = null,
+                                    relatedContactPhoneNumber = null,
                                     assignedTo = null,
                                     isSynced = false,
                                     cloudId = null,

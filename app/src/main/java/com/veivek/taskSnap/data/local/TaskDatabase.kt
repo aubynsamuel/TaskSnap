@@ -13,7 +13,7 @@ import com.veivek.taskSnap.data.local.entity.TaskEntity
  */
 @Database(
     entities = [TaskEntity::class],
-    version = 1,
+    version = 2,
     exportSchema = true
 )
 abstract class TaskDatabase : RoomDatabase() {
@@ -33,6 +33,7 @@ abstract class TaskDatabase : RoomDatabase() {
                     TaskDatabase::class.java,
                     DATABASE_NAME
                 )
+                    .fallbackToDestructiveMigration(false)
                     .build()
 
                 INSTANCE = instance

@@ -53,6 +53,8 @@ fun EnhancedAddTaskDialog(
     onSave: (title: String, description: String, isUrgent: Boolean, isImportant: Boolean) -> Unit,
     prefillTitle: String = "",
     prefillDescription: String = "",
+    dialogTitle: String = "Create New Task",
+    subTitle: String? = null,
 ) {
     var title by remember { mutableStateOf(prefillTitle) }
     var description by remember { mutableStateOf(prefillDescription) }
@@ -96,11 +98,17 @@ fun EnhancedAddTaskDialog(
             ) {
                 // Header
                 Text(
-                    text = "✨ Create New Task",
+                    text = "✨ $dialogTitle",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
+                if (subTitle != null) {
+                    Text(
+                        text = subTitle,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
 
                 // Title input
                 OutlinedTextField(

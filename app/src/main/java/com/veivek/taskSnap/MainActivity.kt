@@ -1,7 +1,6 @@
 package com.veivek.taskSnap
 
 import android.Manifest
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -14,8 +13,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.core.content.ContextCompat
+import androidx.core.content.edit
 import com.veivek.taskSnap.data.service.CallMonitorService
-import com.veivek.taskSnap.presentation.components.CallEndedDialog
 import com.veivek.taskSnap.presentation.components.SetupWizardScreen
 import com.veivek.taskSnap.presentation.navigation.Navigation
 import com.veivek.taskSnap.presentation.theme.TaskSnapTheme
@@ -40,15 +39,8 @@ class MainActivity : ComponentActivity() {
         private const val KEY_SETUP_COMPLETE = "setup_complete"
     }
 
-    // State for dialogs
-    private var callEndedData = mutableStateOf<CallEndedInfo?>(null)
+    // State for setup wizard
     private var showSetupWizard = mutableStateOf(false)
-
-    data class CallEndedInfo(
-        val phoneNumber: String?,
-        val contactName: String?,
-        val isIncoming: Boolean,
-    )
 
     // Permission launcher
     private val permissionLauncher = registerForActivityResult(
@@ -83,17 +75,6 @@ class MainActivity : ComponentActivity() {
 
         Log.d(TAG, "📱 MainActivity onCreate()")
 
-        // Set up callback for when service detects call ended
-        CallMonitorService.onCallEnded = { phoneNumber, contactName, isIncoming ->
-            Log.d(TAG, "📞 Call ended callback received: $phoneNumber, $contactName, $isIncoming")
-            runOnUiThread {
-                callEndedData.value = CallEndedInfo(phoneNumber, contactName, isIncoming)
-            }
-        }
-
-        // Handle intent from notification
-        handleIntent(intent)
-
         // Check if first launch
         val prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
         val setupComplete = prefs.getBoolean(KEY_SETUP_COMPLETE, false)
@@ -120,24 +101,8 @@ class MainActivity : ComponentActivity() {
                 } else {
                     Navigation()
                 }
-
-                // Call ended dialog (fallback if overlay not shown)
-                val callEnded by callEndedData
-                callEnded?.let { info ->
-                    CallEndedDialog(
-                        phoneNumber = info.phoneNumber,
-                        contactName = info.contactName,
-                        isIncoming = info.isIncoming,
-                        onDismiss = { callEndedData.value = null }
-                    )
-                }
             }
         }
-    }
-
-    override fun onNewIntent(intent: Intent) {
-        super.onNewIntent(intent)
-        handleIntent(intent)
     }
 
     override fun onResume() {
@@ -157,17 +122,6 @@ class MainActivity : ComponentActivity() {
                 // User granted overlay but not battery - ask for battery
                 checkAndRequestBatteryOptimization()
             }
-        }
-    }
-
-    private fun handleIntent(intent: Intent?) {
-        if (intent?.action == CallMonitorService.ACTION_CALL_ENDED) {
-            val phoneNumber = intent.getStringExtra(CallMonitorService.EXTRA_PHONE_NUMBER)
-            val contactName = intent.getStringExtra(CallMonitorService.EXTRA_CONTACT_NAME)
-            val isIncoming = intent.getBooleanExtra(CallMonitorService.EXTRA_IS_INCOMING, false)
-
-            Log.d(TAG, "📞 Received call ended intent: $phoneNumber, $contactName")
-            callEndedData.value = CallEndedInfo(phoneNumber, contactName, isIncoming)
         }
     }
 
@@ -232,7 +186,7 @@ class MainActivity : ComponentActivity() {
 
         // Mark setup as complete
         val prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
-        prefs.edit().putBoolean(KEY_SETUP_COMPLETE, true).apply()
+        prefs.edit { putBoolean(KEY_SETUP_COMPLETE, true) }
         Log.d(TAG, "💾 Setup completion saved to SharedPreferences")
 
         // Start the service

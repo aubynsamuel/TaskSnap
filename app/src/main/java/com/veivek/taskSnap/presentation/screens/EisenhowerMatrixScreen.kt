@@ -56,6 +56,12 @@ fun EisenhowerMatrixScreen(
     val q2Count by viewModel.q2Count.collectAsState()
     val q3Count by viewModel.q3Count.collectAsState()
     val q4Count by viewModel.q4Count.collectAsState()
+
+    val q1Preview by viewModel.q1PreviewTasks.collectAsState()
+    val q2Preview by viewModel.q2PreviewTasks.collectAsState()
+    val q3Preview by viewModel.q3PreviewTasks.collectAsState()
+    val q4Preview by viewModel.q4PreviewTasks.collectAsState()
+
     val uiState by viewModel.uiState.collectAsState()
 
     val snackbarHostState = remember { SnackbarHostState() }
@@ -154,12 +160,14 @@ fun EisenhowerMatrixScreen(
                     QuadrantCard(
                         quadrant = Quadrant.Q1_DO_FIRST,
                         taskCount = q1Count,
+                        previewTasks = q1Preview,
                         modifier = Modifier.weight(1f),
                         onClick = { backStack.navigate(AppRoutes.QuadrantDetail(1)) }
                     )
                     QuadrantCard(
                         quadrant = Quadrant.Q2_SCHEDULE,
                         taskCount = q2Count,
+                        previewTasks = q2Preview,
                         modifier = Modifier.weight(1f),
                         onClick = { backStack.navigate(AppRoutes.QuadrantDetail(2)) }
                     )
@@ -175,12 +183,14 @@ fun EisenhowerMatrixScreen(
                     QuadrantCard(
                         quadrant = Quadrant.Q3_DELEGATE,
                         taskCount = q3Count,
+                        previewTasks = q3Preview,
                         modifier = Modifier.weight(1f),
                         onClick = { backStack.navigate(AppRoutes.QuadrantDetail(3)) }
                     )
                     QuadrantCard(
                         quadrant = Quadrant.Q4_DELETE,
                         taskCount = q4Count,
+                        previewTasks = q4Preview,
                         modifier = Modifier.weight(1f),
                         onClick = { backStack.navigate(AppRoutes.QuadrantDetail(4)) }
                     )
