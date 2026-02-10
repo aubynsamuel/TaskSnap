@@ -7,7 +7,6 @@ import com.veivek.taskSnap.data.repository.TaskRepositoryImpl
 import com.veivek.taskSnap.domain.repository.TaskRepository
 import dagger.Module
 import dagger.Provides
-import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
@@ -36,10 +35,4 @@ object AppModule {
     fun provideTaskRepository(taskDao: TaskDao): TaskRepository {
         return TaskRepositoryImpl(taskDao)
     }
-}
-
-@EntryPoint
-@InstallIn(SingletonComponent::class)
-interface TaskRepositoryEntryPoint {
-    fun taskRepository(): TaskRepository
 }
