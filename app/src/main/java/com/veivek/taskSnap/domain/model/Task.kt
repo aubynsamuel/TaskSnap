@@ -20,6 +20,7 @@ data class Task(
     val cloudId: String?,
     val isCompleted: Boolean,
     val completedTimestamp: Long?,
+    val scheduledReminderTime: Long? = null,
 ) {
     /**
      * Get the quadrant this task belongs to based on Eisenhower Matrix.

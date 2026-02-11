@@ -90,13 +90,14 @@ fun TaskDetailScreen(
     if (showEditDialog) {
         EnhancedAddTaskDialog(
             onDismiss = { showEditDialog = false },
-            onSave = { title, description, isUrgent, isImportant ->
+            onSave = { title, description, isUrgent, isImportant, reminderTime ->
                 val updatedTask = currentTask.copy(
                     title = title,
                     description = description,
                     isUrgent = isUrgent,
                     isImportant = isImportant,
-                    lastModified = System.currentTimeMillis()
+                    lastModified = System.currentTimeMillis(),
+                    scheduledReminderTime = reminderTime
                 )
                 viewModel.updateTask(updatedTask)
                 showEditDialog = false

@@ -16,17 +16,27 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TimePicker
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -42,19 +52,22 @@ import com.veivek.taskSnap.presentation.theme.Q1Primary
 import com.veivek.taskSnap.presentation.theme.Q2Primary
 import com.veivek.taskSnap.presentation.theme.Q3Primary
 import com.veivek.taskSnap.presentation.theme.Q4Primary
+import java.util.Calendar
 
 /**
  * Enhanced dialog for adding a new task.
  * Features Urgent/Important toggles with beautiful animations.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EnhancedAddTaskDialog(
     onDismiss: () -> Unit,
-    onSave: (title: String, description: String, isUrgent: Boolean, isImportant: Boolean) -> Unit,
+    onSave: (title: String, description: String, isUrgent: Boolean, isImportant: Boolean, scheduledReminderTime: Long?) -> Unit,
     prefillTitle: String = "",
     prefillDescription: String = "",
     prefillIsUrgent: Boolean = false,
     prefillIsImportant: Boolean = false,
+    prefillScheduledReminderTime: Long? = null,
     dialogTitle: String = "Create New Task",
     confirmButtonText: String = "Create Task",
     subTitle: String? = null,
@@ -63,6 +76,16 @@ fun EnhancedAddTaskDialog(
     var description by remember { mutableStateOf(prefillDescription) }
     var isUrgent by remember { mutableStateOf(prefillIsUrgent) }
     var isImportant by remember { mutableStateOf(prefillIsImportant) }
+
+    var showReminderToggle by remember { mutableStateOf(prefillScheduledReminderTime != null) }
+    var reminderTime by remember {
+        mutableLongStateOf(
+            prefillScheduledReminderTime ?: (System.currentTimeMillis() + 3600000)
+        )
+    } // Default to 1 hour from now
+
+    var showDatePicker by remember { mutableStateOf(false) }
+    var showTimePicker by remember { mutableStateOf(false) }
 
     val quadrantColor = when {
         isUrgent && isImportant -> Q1Primary
@@ -88,6 +111,7 @@ fun EnhancedAddTaskDialog(
     ) {
         Surface(
             modifier = Modifier
+                .verticalScroll(rememberScrollState())
                 .fillMaxWidth()
                 .padding(24.dp),
             shape = RoundedCornerShape(24.dp),
@@ -170,6 +194,48 @@ fun EnhancedAddTaskDialog(
                     )
                 }
 
+                // Reminder Section
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "🔔 Set Reminder",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        androidx.compose.material3.Switch(
+                            checked = showReminderToggle,
+                            onCheckedChange = { showReminderToggle = it }
+                        )
+                    }
+
+                    if (showReminderToggle) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            val sdf = remember {
+                                java.text.SimpleDateFormat(
+                                    "MMM dd, yyyy HH:mm",
+                                    java.util.Locale.getDefault()
+                                )
+                            }
+                            OutlinedButton(
+                                onClick = { showDatePicker = true },
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Text(sdf.format(java.util.Date(reminderTime)))
+                            }
+                        }
+                    }
+                }
+
                 // Quadrant preview
                 AnimatedVisibility(
                     visible = true,
@@ -231,13 +297,104 @@ fun EnhancedAddTaskDialog(
                     Button(
                         onClick = {
                             if (title.isNotBlank()) {
-                                onSave(title, description, isUrgent, isImportant)
+                                val finalReminderTime =
+                                    if (showReminderToggle) reminderTime else null
+                                onSave(title, description, isUrgent, isImportant, finalReminderTime)
                             }
                         },
                         enabled = title.isNotBlank(),
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Text(confirmButtonText)
+                    }
+                }
+            }
+        }
+    }
+
+    // Date Picker Dialog
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = reminderTime
+        )
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let { selectedMillis ->
+                        val calendar = Calendar.getInstance().apply {
+                            timeInMillis = selectedMillis
+                            val currentReminder =
+                                Calendar.getInstance().apply { timeInMillis = reminderTime }
+                            set(Calendar.HOUR_OF_DAY, currentReminder.get(Calendar.HOUR_OF_DAY))
+                            set(Calendar.MINUTE, currentReminder.get(Calendar.MINUTE))
+                        }
+                        reminderTime = calendar.timeInMillis
+                    }
+                    showDatePicker = false
+                    showTimePicker = true // Automatically show time picker after date
+                }) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text("Cancel")
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+
+    // Time Picker Dialog
+    if (showTimePicker) {
+        val calendar = Calendar.getInstance().apply { timeInMillis = reminderTime }
+        val timePickerState = rememberTimePickerState(
+            initialHour = calendar.get(Calendar.HOUR_OF_DAY),
+            initialMinute = calendar.get(Calendar.MINUTE),
+            is24Hour = false
+        )
+
+        Dialog(onDismissRequest = { showTimePicker = false }) {
+            Surface(
+                shape = RoundedCornerShape(24.dp),
+                color = MaterialTheme.colorScheme.surface,
+                tonalElevation = 6.dp
+            ) {
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(20.dp)
+                ) {
+                    Text(
+                        text = "Select Time",
+                        style = MaterialTheme.typography.labelLarge,
+                        modifier = Modifier.align(Alignment.Start)
+                    )
+
+                    TimePicker(state = timePickerState)
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        TextButton(onClick = { showTimePicker = false }) {
+                            Text("Cancel")
+                        }
+                        TextButton(onClick = {
+                            val updatedCalendar = Calendar.getInstance().apply {
+                                timeInMillis = reminderTime
+                                set(Calendar.HOUR_OF_DAY, timePickerState.hour)
+                                set(Calendar.MINUTE, timePickerState.minute)
+                                set(Calendar.SECOND, 0)
+                                set(Calendar.MILLISECOND, 0)
+                            }
+                            reminderTime = updatedCalendar.timeInMillis
+                            showTimePicker = false
+                        }) {
+                            Text("OK")
+                        }
                     }
                 }
             }
