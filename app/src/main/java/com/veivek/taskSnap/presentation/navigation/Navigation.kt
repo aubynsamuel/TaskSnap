@@ -3,6 +3,7 @@ package com.veivek.taskSnap.presentation.navigation
 import androidx.compose.foundation.background
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.retain.retain
 import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -21,8 +22,15 @@ import com.veivek.taskSnap.presentation.viewmodel.TaskViewModel
  * Uses Navigation 3 library with type-safe routes.
  */
 @Composable
-fun Navigation() {
+fun Navigation(startTaskId: String? = null) {
     val backStack = retain { NavBackStack<NavKey>(AppRoutes.EisenhowerMatrix) }
+
+    // Handle deep link
+    LaunchedEffect(startTaskId) {
+        if (startTaskId != null) {
+            backStack.navigate(AppRoutes.TaskDetail(startTaskId))
+        }
+    }
 
     NavDisplay(
         onBack = { backStack.removeLastOrNull() },

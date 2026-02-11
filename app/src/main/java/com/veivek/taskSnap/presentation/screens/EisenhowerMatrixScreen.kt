@@ -211,12 +211,13 @@ fun EisenhowerMatrixScreen(
     if (showAddTaskDialog) {
         EnhancedAddTaskDialog(
             onDismiss = { showAddTaskDialog = false },
-            onSave = { title, description, isUrgent, isImportant ->
+            onSave = { title, description, isUrgent, isImportant, reminderTime ->
                 viewModel.createTask(
                     title = title,
                     description = description,
                     isUrgent = isUrgent,
-                    isImportant = isImportant
+                    isImportant = isImportant,
+                    scheduledReminderTime = reminderTime
                 )
                 showAddTaskDialog = false
             }

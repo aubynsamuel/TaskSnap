@@ -6,6 +6,7 @@ import com.veivek.taskSnap.data.local.entity.TaskEntity
 import com.veivek.taskSnap.domain.model.Quadrant
 import com.veivek.taskSnap.domain.model.Task
 import com.veivek.taskSnap.domain.repository.TaskRepository
+import com.veivek.taskSnap.infrastructure.ReminderManager
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -15,6 +16,7 @@ import kotlinx.coroutines.flow.map
  */
 class TaskRepositoryImpl(
     private val taskDao: TaskDao,
+    private val reminderManager: ReminderManager,
 ) : TaskRepository {
 
     companion object {
@@ -26,6 +28,12 @@ class TaskRepositoryImpl(
             val entity = TaskEntity.fromDomain(task)
             taskDao.insertTask(entity)
             Log.d(TAG, "Task added successfully: ${task.id}")
+
+            // Handle reminder
+            if (task.scheduledReminderTime != null) {
+                reminderManager.scheduleReminder(task)
+            }
+            
             Result.success(task.id)
         } catch (e: Exception) {
             Log.e(TAG, "Error adding task", e)
@@ -134,6 +142,13 @@ class TaskRepositoryImpl(
             val entity = TaskEntity.fromDomain(task)
             taskDao.updateTask(entity)
             Log.d(TAG, "Task updated successfully: ${task.id}")
+
+            // Handle reminder (cancel old, schedule new)
+            reminderManager.cancelReminder(task.id)
+            if (task.scheduledReminderTime != null && !task.isCompleted) {
+                reminderManager.scheduleReminder(task)
+            }
+            
             Result.success(Unit)
         } catch (e: Exception) {
             Log.e(TAG, "Error updating task", e)
@@ -146,6 +161,20 @@ class TaskRepositoryImpl(
             val timestamp = if (isCompleted) System.currentTimeMillis() else null
             taskDao.markTaskCompleted(taskId, isCompleted, timestamp)
             Log.d(TAG, "Task marked as ${if (isCompleted) "completed" else "active"}: $taskId")
+
+            // Handle reminder
+            if (isCompleted) {
+                reminderManager.cancelReminder(taskId)
+            } else {
+                // If restored, re-schedule if we have the data
+                val taskResult = getTaskById(taskId)
+                taskResult.onSuccess { task ->
+                    if (task?.scheduledReminderTime != null) {
+                        reminderManager.scheduleReminder(task)
+                    }
+                }
+            }
+            
             Result.success(Unit)
         } catch (e: Exception) {
             Log.e(TAG, "Error marking task completed", e)
@@ -173,6 +202,10 @@ class TaskRepositoryImpl(
         return try {
             taskDao.deleteTaskById(taskId)
             Log.d(TAG, "Task deleted: $taskId")
+
+            // Cancel reminder
+            reminderManager.cancelReminder(taskId)
+            
             Result.success(Unit)
         } catch (e: Exception) {
             Log.e(TAG, "Error deleting task", e)

@@ -5,6 +5,7 @@ import com.veivek.taskSnap.data.local.TaskDatabase
 import com.veivek.taskSnap.data.local.dao.TaskDao
 import com.veivek.taskSnap.data.repository.TaskRepositoryImpl
 import com.veivek.taskSnap.domain.repository.TaskRepository
+import com.veivek.taskSnap.infrastructure.ReminderManager
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -32,7 +33,10 @@ object AppModule {
 
     @Singleton
     @Provides
-    fun provideTaskRepository(taskDao: TaskDao): TaskRepository {
-        return TaskRepositoryImpl(taskDao)
+    fun provideTaskRepository(
+        taskDao: TaskDao,
+        reminderManager: ReminderManager,
+    ): TaskRepository {
+        return TaskRepositoryImpl(taskDao, reminderManager)
     }
 }

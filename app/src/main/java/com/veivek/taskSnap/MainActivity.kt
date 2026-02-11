@@ -22,14 +22,6 @@ import com.veivek.taskSnap.presentation.utils.BatteryOptimizationHelper
 import com.veivek.taskSnap.presentation.utils.OverlayPermissionHelper
 import dagger.hilt.android.AndroidEntryPoint
 
-/**
- * Main Activity for TaskSnap MVP
- *
- * IMPROVEMENTS:
- * - Better logging for debugging service startup
- * - Explicit service start after permissions granted
- * - Verification that service is actually running
- */
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
@@ -39,28 +31,25 @@ class MainActivity : ComponentActivity() {
         private const val KEY_SETUP_COMPLETE = "setup_complete"
     }
 
-    // State for setup wizard
     private var showSetupWizard = mutableStateOf(false)
 
-    // Permission launcher
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
         val granted = permissions.filter { it.value }.keys
         val denied = permissions.filter { !it.value }.keys
 
-        Log.d(TAG, "✅ Permissions granted: $granted")
-        Log.d(TAG, "❌ Permissions denied: $denied")
+        Log.d(TAG, "Permissions granted: $granted")
+        Log.d(TAG, "Permissions denied: $denied")
 
         val hasPhoneState = permissions[Manifest.permission.READ_PHONE_STATE] == true
         val hasCallLog = permissions[Manifest.permission.READ_CALL_LOG] == true
 
         if (hasPhoneState && hasCallLog) {
-            Log.d(TAG, "✅ Essential permissions granted, continuing setup...")
-            // Phone permissions granted, continue with overlay permission
+            Log.d(TAG, "Essential permissions granted, continuing setup...")
             checkAndRequestOverlayPermission()
         } else {
-            Log.e(TAG, "❌ Essential permissions missing!")
+            Log.e(TAG, "Essential permissions missing!")
             Toast.makeText(
                 this,
                 "Phone and Call Log permissions are required for call detection",
@@ -73,18 +62,15 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        Log.d(TAG, "📱 MainActivity onCreate()")
-
-        // Check if first launch
         val prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
         val setupComplete = prefs.getBoolean(KEY_SETUP_COMPLETE, false)
 
         if (!setupComplete) {
-            Log.d(TAG, "🆕 First launch detected - starting setup wizard")
+            Log.d(TAG, "First launch detected - starting setup wizard")
             showSetupWizard.value = true
             requestPhonePermissions()
         } else {
-            Log.d(TAG, "✅ Setup already complete - verifying service")
+            Log.d(TAG, "Setup already complete - verifying service")
             ensureServiceRunning()
         }
 
@@ -99,7 +85,8 @@ class MainActivity : ComponentActivity() {
                         }
                     )
                 } else {
-                    Navigation()
+                    val startTaskId = intent.getStringExtra("TASK_ID")
+                    Navigation(startTaskId = startTaskId)
                 }
             }
         }
@@ -107,9 +94,6 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        Log.d(TAG, "📱 MainActivity onResume()")
-
-        // Check permissions if wizard is showing (user returning from settings)
         if (showSetupWizard.value) {
             val hasOverlay = OverlayPermissionHelper.hasOverlayPermission(this)
             val hasBattery = BatteryOptimizationHelper.isIgnoringBatteryOptimizations(this)
@@ -118,8 +102,7 @@ class MainActivity : ComponentActivity() {
 
             if (hasOverlay && hasBattery) {
                 onAllPermissionsGranted()
-            } else if (hasOverlay && !hasBattery) {
-                // User granted overlay but not battery - ask for battery
+            } else if (!hasBattery && hasOverlay) {
                 checkAndRequestBatteryOptimization()
             }
         }
@@ -143,20 +126,20 @@ class MainActivity : ComponentActivity() {
         }
 
         if (permissionsNeeded.isEmpty()) {
-            Log.d(TAG, "✅ All phone permissions already granted")
+            Log.d(TAG, "All phone permissions already granted")
             checkAndRequestOverlayPermission()
         } else {
-            Log.d(TAG, "🔐 Requesting permissions: $permissionsNeeded")
+            Log.d(TAG, "Requesting permissions: $permissionsNeeded")
             permissionLauncher.launch(permissionsNeeded.toTypedArray())
         }
     }
 
     private fun checkAndRequestOverlayPermission() {
         if (OverlayPermissionHelper.hasOverlayPermission(this)) {
-            Log.d(TAG, "✅ Overlay permission already granted")
+            Log.d(TAG, "Overlay permission already granted")
             checkAndRequestBatteryOptimization()
         } else {
-            Log.d(TAG, "🔐 Requesting overlay permission")
+            Log.d(TAG, "Requesting overlay permission")
             Toast.makeText(
                 this,
                 "Please allow 'Display over other apps' for popup notifications",
@@ -168,10 +151,10 @@ class MainActivity : ComponentActivity() {
 
     private fun checkAndRequestBatteryOptimization() {
         if (BatteryOptimizationHelper.isIgnoringBatteryOptimizations(this)) {
-            Log.d(TAG, "✅ Battery optimization already ignored")
+            Log.d(TAG, "Battery optimization already ignored")
             onAllPermissionsGranted()
         } else {
-            Log.d(TAG, "🔋 Requesting battery optimization exemption")
+            Log.d(TAG, "Requesting battery optimization exemption")
             Toast.makeText(
                 this,
                 "Please disable battery optimization to ensure reliable call detection",
@@ -182,35 +165,34 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun onAllPermissionsGranted() {
-        Log.d(TAG, "✅✅✅ All permissions granted! Starting service...")
+        Log.d(TAG, "All permissions granted! Starting service...")
 
         // Mark setup as complete
         val prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
         prefs.edit { putBoolean(KEY_SETUP_COMPLETE, true) }
-        Log.d(TAG, "💾 Setup completion saved to SharedPreferences")
+        Log.d(TAG, "Setup completion saved to SharedPreferences")
 
-        // Start the service
         startCallMonitorService()
 
         // Hide wizard
         showSetupWizard.value = false
 
-        Toast.makeText(this, "✅ TaskSnap is ready!", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "TaskSnap is ready!", Toast.LENGTH_SHORT).show()
     }
 
     private fun startCallMonitorService() {
-        Log.d(TAG, "🚀 Starting CallMonitorService...")
+        Log.d(TAG, "Starting CallMonitorService...")
 
         try {
             CallMonitorService.start(this)
-            Log.d(TAG, "✅ CallMonitorService start command sent")
+            Log.d(TAG, "CallMonitorService start command sent")
 
             // Verify service started (with slight delay to let it initialize)
             postDelayed(1000) {
                 verifyServiceRunning()
             }
         } catch (e: Exception) {
-            Log.e(TAG, "❌ Failed to start call monitor service", e)
+            Log.e(TAG, "Failed to start call monitor service", e)
             Toast.makeText(
                 this,
                 "Error starting service: ${e.message}",
@@ -221,14 +203,11 @@ class MainActivity : ComponentActivity() {
 
     private fun verifyServiceRunning() {
         // This is a simple check - in production you might want to use ActivityManager
-        Log.d(TAG, "🔍 Verifying service is running...")
-        // The service should log "Call monitoring started successfully ✅" if working
+        Log.d(TAG, "Verifying service is running...")
+        // The service should log "Call monitoring started successfully" if working
     }
 
     private fun ensureServiceRunning() {
-        Log.d(TAG, "🔍 Ensuring service is running...")
-        // The service should already be running (started by boot receiver)
-        // But we can restart it just to be safe
         startCallMonitorService()
     }
 
@@ -238,8 +217,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        Log.d(TAG, "💀 MainActivity onDestroy()")
+        Log.d(TAG, "MainActivity onDestroy")
         CallMonitorService.onCallEnded = null
-        // Note: We don't stop the service - it should keep running
     }
 }

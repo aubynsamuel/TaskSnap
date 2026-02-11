@@ -96,6 +96,7 @@ class TaskViewModel @Inject constructor(
         source: TaskSource = TaskSource.MANUAL,
         relatedContactName: String? = null,
         relatedContactPhoneNumber: String? = null,
+        scheduledReminderTime: Long? = null,
     ) {
         viewModelScope.launch {
             _uiState.value = MatrixUiState.Loading
@@ -115,7 +116,8 @@ class TaskViewModel @Inject constructor(
                 isSynced = false,
                 cloudId = null,
                 isCompleted = false,
-                completedTimestamp = null
+                completedTimestamp = null,
+                scheduledReminderTime = scheduledReminderTime
             )
 
             repository.addTask(task)

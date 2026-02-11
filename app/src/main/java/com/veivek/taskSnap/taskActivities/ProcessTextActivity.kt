@@ -19,7 +19,6 @@ import javax.inject.Inject
 
 /**
  * Activity that handles ACTION_PROCESS_TEXT and ACTION_SEND intents.
- * This is the core of Feature 2: Text Selection & Share Integration
  *
  * Technical Notes:
  * - ACTION_PROCESS_TEXT: Appears in the text selection menu (Android 6+)
@@ -55,7 +54,7 @@ class ProcessTextActivity : ComponentActivity() {
                     prefillTitle = "",
                     prefillDescription = text,
                     onDismiss = { finish() },
-                    onSave = { title, description, isUrgent, isImportant ->
+                    onSave = { title, description, isUrgent, isImportant, reminder ->
                         lifecycleScope.launch {
                             repository.addTask(
                                 Task(
@@ -74,6 +73,7 @@ class ProcessTextActivity : ComponentActivity() {
                                     cloudId = null,
                                     isCompleted = false,
                                     completedTimestamp = null,
+                                    scheduledReminderTime = reminder
                                 )
                             )
                             finish()

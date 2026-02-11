@@ -37,6 +37,7 @@ data class TaskEntity(
     val cloudId: String?,
     val isCompleted: Boolean,
     val completedTimestamp: Long?,
+    val scheduledReminderTime: Long?,
 ) {
     /**
      * Convert entity to domain model.
@@ -57,7 +58,8 @@ data class TaskEntity(
             isSynced = isSynced,
             cloudId = cloudId,
             isCompleted = isCompleted,
-            completedTimestamp = completedTimestamp
+            completedTimestamp = completedTimestamp,
+            scheduledReminderTime = scheduledReminderTime
         )
     }
 
@@ -81,7 +83,8 @@ data class TaskEntity(
                 isSynced = task.isSynced,
                 cloudId = task.cloudId,
                 isCompleted = task.isCompleted,
-                completedTimestamp = task.completedTimestamp
+                completedTimestamp = task.completedTimestamp,
+                scheduledReminderTime = task.scheduledReminderTime
             )
         }
     }

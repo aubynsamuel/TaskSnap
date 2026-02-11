@@ -13,6 +13,9 @@
     <!-- Notification Permission (Android 13+) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!-- Exact Alarm Permission (Android 12+) -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+
     <!-- Boot Receiver - Auto-start service when device boots -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
@@ -130,6 +133,12 @@
                 <action android:name="android.intent.action.PHONE_STATE" />
             </intent-filter>
         </receiver>
+
+        <!-- Reminder Receiver -->
+        <receiver
+            android:name=".infrastructure.ReminderReceiver"
+            android:enabled="true"
+            android:exported="false" />
 
     </application>
 

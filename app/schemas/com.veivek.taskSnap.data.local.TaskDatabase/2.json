@@ -1,0 +1,145 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 2,
+    "identityHash": "6bb9d2d801203d0a053fae58da905e38",
+    "entities": [
+      {
+        "tableName": "tasks",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `title` TEXT NOT NULL, `description` TEXT NOT NULL, `isUrgent` INTEGER NOT NULL, `isImportant` INTEGER NOT NULL, `createdTimestamp` INTEGER NOT NULL, `lastModified` INTEGER NOT NULL, `source` TEXT NOT NULL, `relatedContactName` TEXT, `relatedContactPhoneNumber` TEXT, `assignedTo` TEXT, `isSynced` INTEGER NOT NULL, `cloudId` TEXT, `isCompleted` INTEGER NOT NULL, `completedTimestamp` INTEGER, `scheduledReminderTime` INTEGER, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "description",
+            "columnName": "description",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isUrgent",
+            "columnName": "isUrgent",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isImportant",
+            "columnName": "isImportant",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdTimestamp",
+            "columnName": "createdTimestamp",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastModified",
+            "columnName": "lastModified",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "source",
+            "columnName": "source",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "relatedContactName",
+            "columnName": "relatedContactName",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "relatedContactPhoneNumber",
+            "columnName": "relatedContactPhoneNumber",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "assignedTo",
+            "columnName": "assignedTo",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "isSynced",
+            "columnName": "isSynced",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cloudId",
+            "columnName": "cloudId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "isCompleted",
+            "columnName": "isCompleted",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "completedTimestamp",
+            "columnName": "completedTimestamp",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "scheduledReminderTime",
+            "columnName": "scheduledReminderTime",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_tasks_isCompleted",
+            "unique": false,
+            "columnNames": [
+              "isCompleted"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_tasks_isCompleted` ON `${TABLE_NAME}` (`isCompleted`)"
+          },
+          {
+            "name": "index_tasks_isUrgent_isImportant",
+            "unique": false,
+            "columnNames": [
+              "isUrgent",
+              "isImportant"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_tasks_isUrgent_isImportant` ON `${TABLE_NAME}` (`isUrgent`, `isImportant`)"
+          },
+          {
+            "name": "index_tasks_createdTimestamp",
+            "unique": false,
+            "columnNames": [
+              "createdTimestamp"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_tasks_createdTimestamp` ON `${TABLE_NAME}` (`createdTimestamp`)"
+          }
+        ]
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '6bb9d2d801203d0a053fae58da905e38')"
+    ]
+  }
+}

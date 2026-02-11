@@ -49,7 +49,7 @@ class CallEndedOverlayActivity : ComponentActivity() {
                     onDismiss = { finish() },
                     prefillTitle = "",
                     prefillDescription = "",
-                    onSave = { title, description, isUrgent, isImportant ->
+                    onSave = { title, description, isUrgent, isImportant, reminder ->
                         lifecycleScope.launch {
                             repository.addTask(
                                 Task(
@@ -68,6 +68,7 @@ class CallEndedOverlayActivity : ComponentActivity() {
                                     cloudId = null,
                                     isCompleted = false,
                                     completedTimestamp = null,
+                                    scheduledReminderTime = reminder
                                 )
                             )
                             finish()
