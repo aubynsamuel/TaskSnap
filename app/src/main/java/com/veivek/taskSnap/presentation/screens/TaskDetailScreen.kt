@@ -15,11 +15,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CheckBox
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Person
@@ -47,6 +49,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -201,22 +204,34 @@ fun TaskDetailScreen(
                             )
                             .padding(horizontal = 12.dp, vertical = 6.dp)
                     ) {
-                        Text(
-                            text = "✅ Completed",
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
-                            fontWeight = FontWeight.Bold
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(5.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.CheckBox,
+                                tint = Color.Green,
+                                contentDescription = null
+                            )
+                            Text(
+                                text = "Completed",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
                 }
             }
 
             // Title
-            Text(
-                text = currentTask.title,
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold
-            )
+            SelectionContainer {
+                Text(
+                    text = currentTask.title,
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
 
             // Description
             if (currentTask.description.isNotBlank()) {
@@ -226,13 +241,15 @@ fun TaskDetailScreen(
                     ),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text(
-                        text = currentTask.description,
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp)
-                    )
+                    SelectionContainer {
+                        Text(
+                            text = currentTask.description,
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp)
+                        )
+                    }
                 }
             }
 
