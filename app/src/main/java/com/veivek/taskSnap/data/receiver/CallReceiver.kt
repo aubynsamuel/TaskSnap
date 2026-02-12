@@ -34,7 +34,6 @@ class CallReceiver : BroadcastReceiver() {
             return
         }
 
-        // Check if setup was completed (permissions granted)
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val setupComplete = prefs.getBoolean(KEY_SETUP_COMPLETE, false)
 
@@ -48,19 +47,16 @@ class CallReceiver : BroadcastReceiver() {
 
         Log.d(
             TAG,
-            "📞 Phone state broadcast received: state=$stateString, number=${phoneNumber?.take(3)}***"
+            "Phone state broadcast received: state=$stateString, number=${phoneNumber?.take(3)}***"
         )
 
         // Start the monitoring service if it's not already running
         // The service will handle the actual call state tracking
         try {
             CallMonitorService.start(context)
-            Log.d(TAG, "✅ CallMonitorService start triggered from broadcast")
+            Log.d(TAG, "CallMonitorService start triggered from broadcast")
         } catch (e: Exception) {
-            Log.e(TAG, "❌ Failed to start CallMonitorService from broadcast", e)
+            Log.e(TAG, "Failed to start CallMonitorService from broadcast", e)
         }
-
-        // Note: We don't track call states here anymore - the service does that
-        // This receiver's only job is to ensure the service is running when a call happens
     }
 }

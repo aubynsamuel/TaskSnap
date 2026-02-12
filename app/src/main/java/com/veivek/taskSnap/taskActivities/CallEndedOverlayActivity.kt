@@ -40,12 +40,16 @@ class CallEndedOverlayActivity : ComponentActivity() {
         val isIncoming = intent.getBooleanExtra(EXTRA_IS_INCOMING, false)
 
         val displayName = contactName ?: phoneNumber ?: "Unknown"
+        val dialogContactInfo =
+            if (contactName.isNullOrBlank()) phoneNumber
+                ?: "Unknown" else "$contactName ($phoneNumber)"
+
 
         setContent {
             TaskSnapTheme {
                 EnhancedAddTaskDialog(
                     dialogTitle = "Create Task After Call",
-                    subTitle = "$contactName ($phoneNumber)",
+                    subTitle = dialogContactInfo,
                     onDismiss = { finish() },
                     prefillTitle = "",
                     prefillDescription = "",

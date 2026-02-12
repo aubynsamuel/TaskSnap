@@ -8,10 +8,6 @@ import com.veivek.taskSnap.data.service.CallMonitorService
 
 /**
  * Boot Receiver - Automatically starts call monitoring service when device boots.
- *
- * This enables Truecaller-style behavior where the app doesn't need to be manually
- * opened to start working. Once permissions are granted on first launch, the service
- * will automatically start after every reboot.
  */
 class BootReceiver : BroadcastReceiver() {
 
@@ -23,7 +19,6 @@ class BootReceiver : BroadcastReceiver() {
         if (intent.action == Intent.ACTION_BOOT_COMPLETED) {
             Log.d(TAG, "Boot completed - starting CallMonitorService")
 
-            // Start the call monitoring service automatically
             try {
                 CallMonitorService.start(context)
                 Log.d(TAG, "CallMonitorService started successfully after boot")

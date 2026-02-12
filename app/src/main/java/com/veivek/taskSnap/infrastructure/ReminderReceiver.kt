@@ -1,5 +1,6 @@
 package com.veivek.taskSnap.infrastructure
 
+import android.R
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
@@ -7,7 +8,6 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationCompat
 import com.veivek.taskSnap.MainActivity
-import com.veivek.taskSnap.R
 import com.veivek.taskSnap.TaskSnapApplication
 
 class ReminderReceiver : BroadcastReceiver() {
@@ -28,7 +28,7 @@ class ReminderReceiver : BroadcastReceiver() {
         )
 
         val notification = NotificationCompat.Builder(context, TaskSnapApplication.CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_launcher_foreground) // Use default icon
+            .setSmallIcon(R.drawable.ic_popup_reminder)
             .setContentTitle("Task Reminder")
             .setContentText(taskTitle)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
