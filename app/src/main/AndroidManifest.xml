@@ -70,6 +70,11 @@
                 <data android:mimeType="text/plain" />
             </intent-filter>
 
+            <!-- Meta-data to support both readonly and editable text selection -->
+            <meta-data
+                android:name="android.intent.extra.PROCESS_TEXT_READONLY"
+                android:value="true" />
+
             <!-- Share Sheet Integration -->
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
@@ -108,7 +113,6 @@
 
         <!--
         Boot Receiver - Automatically starts the service when device boots.
-        This enables Truecaller-style behavior (no need to manually open app).
         -->
         <receiver
             android:name=".data.receiver.BootReceiver"

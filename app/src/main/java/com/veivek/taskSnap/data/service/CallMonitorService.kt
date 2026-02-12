@@ -168,7 +168,7 @@ class CallMonitorService : Service() {
             return
         }
 
-        Log.d(TAG, "🎯 Starting call monitoring...")
+        Log.d(TAG, "Starting call monitoring...")
 
         // Check permissions first
         if (!hasRequiredPermissions()) {
