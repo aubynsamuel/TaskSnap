@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -13,6 +15,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.veivek.taskSnap.domain.model.Quadrant
+import com.veivek.taskSnap.presentation.utils.icon
+import com.veivek.taskSnap.presentation.utils.primaryColor
 
 /**
  * Empty state for quadrant with no tasks.
@@ -20,7 +24,6 @@ import com.veivek.taskSnap.domain.model.Quadrant
 @Composable
 fun EmptyQuadrantState(
     quadrant: Quadrant,
-    emoji: String,
     modifier: Modifier = Modifier,
 ) {
     Box(
@@ -32,9 +35,11 @@ fun EmptyQuadrantState(
             verticalArrangement = Arrangement.spacedBy(16.dp),
             modifier = Modifier.padding(32.dp)
         ) {
-            Text(
-                text = emoji,
-                style = MaterialTheme.typography.displayLarge
+            Icon(
+                imageVector = quadrant.icon,
+                contentDescription = null,
+                modifier = Modifier.size(80.dp),
+                tint = quadrant.primaryColor.copy(alpha = 0.5f)
             )
             Text(
                 text = "No tasks yet",

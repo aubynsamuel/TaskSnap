@@ -11,10 +11,8 @@ import androidx.compose.ui.unit.sp
  * Falls back to system default if fonts not available.
  */
 
-// Define Inter font family (you'll need to add these font files to res/font/)
 val InterFontFamily = FontFamily.Default // TODO: Add Inter fonts to res/font/
 
-// Material 3 Typography
 val Typography = Typography(
     // Display styles - Large headings
     displayLarge = TextStyle(

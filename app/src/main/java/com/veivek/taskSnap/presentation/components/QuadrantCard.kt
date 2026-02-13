@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -33,18 +34,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.veivek.taskSnap.domain.model.Quadrant
 import com.veivek.taskSnap.domain.model.Task
-import com.veivek.taskSnap.presentation.theme.Q1Container
-import com.veivek.taskSnap.presentation.theme.Q1OnContainer
-import com.veivek.taskSnap.presentation.theme.Q1Primary
-import com.veivek.taskSnap.presentation.theme.Q2Container
-import com.veivek.taskSnap.presentation.theme.Q2OnContainer
-import com.veivek.taskSnap.presentation.theme.Q2Primary
-import com.veivek.taskSnap.presentation.theme.Q3Container
-import com.veivek.taskSnap.presentation.theme.Q3OnContainer
-import com.veivek.taskSnap.presentation.theme.Q3Primary
-import com.veivek.taskSnap.presentation.theme.Q4Container
-import com.veivek.taskSnap.presentation.theme.Q4OnContainer
-import com.veivek.taskSnap.presentation.theme.Q4Primary
+import com.veivek.taskSnap.presentation.utils.containerColor
+import com.veivek.taskSnap.presentation.utils.icon
+import com.veivek.taskSnap.presentation.utils.primaryColor
 
 @Composable
 fun QuadrantCard(
@@ -55,19 +47,9 @@ fun QuadrantCard(
     onClick: () -> Unit,
     onTaskClick: (Task) -> Unit = {},
 ) {
-    val (primaryColor, containerColor, onContainerColor) = when (quadrant) {
-        Quadrant.Q1_DO_FIRST -> Triple(Q1Primary, Q1Container, Q1OnContainer)
-        Quadrant.Q2_SCHEDULE -> Triple(Q2Primary, Q2Container, Q2OnContainer)
-        Quadrant.Q3_DELEGATE -> Triple(Q3Primary, Q3Container, Q3OnContainer)
-        Quadrant.Q4_DELETE -> Triple(Q4Primary, Q4Container, Q4OnContainer)
-    }
-
-    val emoji = when (quadrant) {
-        Quadrant.Q1_DO_FIRST -> "🔥"
-        Quadrant.Q2_SCHEDULE -> "📅"
-        Quadrant.Q3_DELEGATE -> "👥"
-        Quadrant.Q4_DELETE -> "🗑️"
-    }
+    val primaryColor = quadrant.primaryColor
+    val containerColor = quadrant.containerColor
+    val icon = quadrant.icon
 
     Card(
         modifier = modifier
@@ -91,9 +73,11 @@ fun QuadrantCard(
         ) {
             // Header
             Column {
-                Text(
-                    text = emoji,
-                    style = MaterialTheme.typography.displaySmall
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = primaryColor,
+                    modifier = Modifier.size(32.dp)
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))

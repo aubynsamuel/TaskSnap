@@ -56,12 +56,9 @@ import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
-import com.veivek.taskSnap.domain.model.Quadrant
 import com.veivek.taskSnap.presentation.components.EnhancedAddTaskDialog
-import com.veivek.taskSnap.presentation.theme.Q1Primary
-import com.veivek.taskSnap.presentation.theme.Q2Primary
-import com.veivek.taskSnap.presentation.theme.Q3Primary
-import com.veivek.taskSnap.presentation.theme.Q4Primary
+import com.veivek.taskSnap.presentation.utils.icon
+import com.veivek.taskSnap.presentation.utils.primaryColor
 import com.veivek.taskSnap.presentation.viewmodel.TaskViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -141,12 +138,9 @@ fun TaskDetailScreen(
     }
 
     val quadrant = currentTask.getQuadrant()
-    val (primaryColor, emoji) = when (quadrant) {
-        Quadrant.Q1_DO_FIRST -> Q1Primary to "🔥 Do First"
-        Quadrant.Q2_SCHEDULE -> Q2Primary to "📅 Schedule"
-        Quadrant.Q3_DELEGATE -> Q3Primary to "👥 Delegate"
-        Quadrant.Q4_DELETE -> Q4Primary to "🗑️ Delete"
-    }
+    val primaryColor = quadrant.primaryColor
+    val icon = quadrant.icon
+    val quadrantName = quadrant.displayName
 
     Scaffold(
         topBar = {
@@ -187,12 +181,23 @@ fun TaskDetailScreen(
                         .background(primaryColor.copy(alpha = 0.1f), RoundedCornerShape(8.dp))
                         .padding(horizontal = 12.dp, vertical = 6.dp)
                 ) {
-                    Text(
-                        text = emoji,
-                        style = MaterialTheme.typography.labelLarge,
-                        color = primaryColor,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = null,
+                            tint = primaryColor,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Text(
+                            text = quadrantName,
+                            style = MaterialTheme.typography.labelLarge,
+                            color = primaryColor,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
                 Spacer(modifier = Modifier.weight(1f))
                 if (currentTask.isCompleted) {
