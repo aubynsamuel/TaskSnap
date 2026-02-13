@@ -51,7 +51,7 @@ Each file should contain exactly **one** primary item (Composable, ViewModel, ut
 
 ✅ **Good - Modular**
 
-```
+```'
 presentation/
   components/
     UserCard.kt          // Contains only UserCard composable
@@ -61,7 +61,7 @@ presentation/
 
 ❌ **Bad - Messy**
 
-```
+```'
 presentation/
   components/
     UserComponents.kt    // Contains UserCard, UserAvatar, StatusBadge
