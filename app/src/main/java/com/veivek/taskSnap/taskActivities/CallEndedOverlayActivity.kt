@@ -5,7 +5,6 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.lifecycle.lifecycleScope
-import com.veivek.taskSnap.data.service.CallMonitorService
 import com.veivek.taskSnap.domain.model.Task
 import com.veivek.taskSnap.domain.model.TaskSource
 import com.veivek.taskSnap.domain.repository.TaskRepository
@@ -51,10 +50,7 @@ class CallEndedOverlayActivity : ComponentActivity() {
                 EnhancedAddTaskDialog(
                     dialogTitle = "Create Task After Call",
                     subTitle = dialogContactInfo,
-                    onDismiss = {
-                        CallMonitorService.stop(this@CallEndedOverlayActivity)
-                        finish()
-                    },
+                    onDismiss = { finish() },
                     prefillTitle = "",
                     prefillDescription = "",
                     onSave = { title, description, isUrgent, isImportant, reminder ->
@@ -79,7 +75,6 @@ class CallEndedOverlayActivity : ComponentActivity() {
                                     scheduledReminderTime = reminder
                                 )
                             )
-                            CallMonitorService.stop(this@CallEndedOverlayActivity)
                             finish()
                         }
                     }
