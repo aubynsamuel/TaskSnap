@@ -1,0 +1,146 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!--
+        TaskSnap Launcher Icon
+        ══════════════════════════════════════════════════════
+        Circle at 0.62 scale, tiles at 0.55 scale so they
+        fit inside the circle with padding. Checkmark centered
+        in Q1, phone badge centered in Q4.
+        ══════════════════════════════════════════════════════
+    -->
+
+    <!-- Background circle — stays at 0.62 scale -->
+    <group
+        android:name="bg_circle"
+        android:pivotX="54"
+        android:pivotY="54"
+        android:scaleX="0.62"
+        android:scaleY="0.62">
+        <path
+            android:fillColor="#1A237E"
+            android:pathData="M54,4A50,50 0,1 1,54,104A50,50 0,1 1,54,4Z" />
+    </group>
+
+    <!-- ══ Four quadrant tiles (0.55 scale — fit inside circle) ══ -->
+
+    <!-- Q1: Urgent + Important — Coral, top-left -->
+    <group
+        android:name="q1_tile"
+        android:pivotX="54"
+        android:pivotY="54"
+        android:scaleX="0.55"
+        android:scaleY="0.55">
+        <path
+            android:fillColor="#E53935"
+            android:pathData="M20,20 L49,20 Q53,20 53,24 L53,49 Q53,53 49,53 L20,53 Q16,53 16,49 L16,24 Q16,20 20,20 Z" />
+    </group>
+
+    <!-- Q2: Important, Not Urgent — Teal, top-right -->
+    <group
+        android:name="q2_tile"
+        android:pivotX="54"
+        android:pivotY="54"
+        android:scaleX="0.55"
+        android:scaleY="0.55">
+        <path
+            android:fillColor="#00897B"
+            android:pathData="M59,20 L88,20 Q92,20 92,24 L92,49 Q92,53 88,53 L59,53 Q55,53 55,49 L55,24 Q55,20 59,20 Z" />
+    </group>
+
+    <!-- Q3: Urgent, Not Important — Amber, bottom-left -->
+    <group
+        android:name="q3_tile"
+        android:pivotX="54"
+        android:pivotY="54"
+        android:scaleX="0.55"
+        android:scaleY="0.55">
+        <path
+            android:fillColor="#F9A825"
+            android:pathData="M20,55 L49,55 Q53,55 53,59 L53,84 Q53,88 49,88 L20,88 Q16,88 16,84 L16,59 Q16,55 20,55 Z" />
+    </group>
+
+    <!-- Q4: Neither — Slate, bottom-right -->
+    <group
+        android:name="q4_tile"
+        android:pivotX="54"
+        android:pivotY="54"
+        android:scaleX="0.55"
+        android:scaleY="0.55">
+        <path
+            android:fillColor="#546E7A"
+            android:pathData="M59,55 L88,55 Q92,55 92,59 L92,84 Q92,88 88,88 L59,88 Q55,88 55,84 L55,59 Q55,55 59,55 Z" />
+    </group>
+
+    <!-- ══ Checkmark — centered in Q1 ══
+         Q1 center is (34.5, 36.5). Checkmark path redrawn
+         with bounding box centered at ~(34, 36).
+    -->
+    <group
+        android:name="checkmark_group"
+        android:pivotX="54"
+        android:pivotY="54"
+        android:scaleX="0.55"
+        android:scaleY="0.55">
+        <group
+            android:pivotX="34.5"
+            android:pivotY="36.5"
+            android:scaleX="0.6"
+            android:scaleY="0.6">
+            <path
+                android:name="checkmark_path"
+                android:fillColor="@android:color/transparent"
+                android:pathData="M22,37 L30,45 L46,27"
+                android:strokeWidth="5"
+                android:strokeColor="#FFFFFF"
+                android:strokeLineCap="round"
+                android:strokeLineJoin="round"
+                android:trimPathStart="0"
+                android:trimPathEnd="0"
+                android:trimPathOffset="0" />
+        </group>
+    </group>
+
+    <!-- ══ Phone badge — centered in Q4 ══
+         Q4 center is (73.5, 71.5). The path data is drawn at (82,82)
+         so we translate by (-8.5, -10.5) to reposition to Q4 center.
+    -->
+    <group
+        android:name="phone_badge_group"
+        android:pivotX="54"
+        android:pivotY="54"
+        android:scaleX="0.55"
+        android:scaleY="0.55">
+        <group
+            android:name="phone_badge_inner"
+            android:pivotX="73.5"
+            android:pivotY="71.5"
+            android:scaleX="0"
+            android:scaleY="0"
+            android:translateX="-8.5"
+            android:translateY="-10.5">
+
+            <!-- Circular badge backing -->
+            <path
+                android:fillColor="#FF6F00"
+                android:pathData="M82,70A12,12 0,1 1,82,94A12,12 0,1 1,82,70Z" />
+
+            <!-- Phone icon — centered in orange circle -->
+            <group
+                android:translateX="70"
+                android:translateY="70"
+                android:pivotX="12"
+                android:pivotY="12"
+                android:scaleX="0.75"
+                android:scaleY="0.75">
+                <path
+                    android:fillColor="#FFFFFF"
+                    android:pathData="M6.62,10.79C8.06,13.59 10.41,15.94 13.21,17.38L15.41,15.18C15.68,14.91 16.08,14.82 16.43,14.93C17.55,15.3 18.75,15.5 20,15.5C20.55,15.5 21,15.95 21,16.5V20C21,20.55 20.55,21 20,21C10.61,21 3,13.39 3,4C3,3.45 3.45,3 4,3H7.5C8.05,3 8.5,3.45 8.5,4C8.5,5.25 8.7,6.45 9.07,7.57C9.18,7.92 9.09,8.32 8.82,8.59L6.62,10.79Z" />
+            </group>
+        </group>
+    </group>
+
+</vector>

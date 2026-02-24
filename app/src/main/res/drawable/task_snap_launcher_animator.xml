@@ -1,0 +1,226 @@
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:drawable="@drawable/task_snap_launcher">
+
+    <!--
+        Animation Timeline (Redesigned)
+        ──────────────────────────────────────────────
+        Phase 1: 0–500ms     Background circle fades in (0.40 → 0.62)
+        Phase 2: 200–1050ms  Quadrant tiles scale in staggered (0.25 → 0.55)
+        Phase 3: 800–1250ms  Checkmark draws on (trimPathEnd 0→1)
+        Phase 4: 1100–1450ms Phone badge pops in with overshoot
+
+        Total perceived duration: ~1400ms
+        ──────────────────────────────────────────────
+    -->
+
+    <!-- ══ PHASE 1: Background circle fades in ══ -->
+
+    <target android:name="bg_circle">
+        <aapt:attr name="android:animation">
+            <set android:ordering="together">
+                <objectAnimator
+                    android:propertyName="alpha"
+                    android:valueFrom="0"
+                    android:valueTo="1"
+                    android:duration="400"
+                    android:startOffset="0"
+                    android:interpolator="@android:interpolator/fast_out_slow_in"
+                    android:valueType="floatType" />
+                <objectAnimator
+                    android:propertyName="scaleX"
+                    android:valueFrom="0.4"
+                    android:valueTo="0.62"
+                    android:duration="500"
+                    android:startOffset="0"
+                    android:interpolator="@android:interpolator/fast_out_slow_in"
+                    android:valueType="floatType" />
+                <objectAnimator
+                    android:propertyName="scaleY"
+                    android:valueFrom="0.4"
+                    android:valueTo="0.62"
+                    android:duration="500"
+                    android:startOffset="0"
+                    android:interpolator="@android:interpolator/fast_out_slow_in"
+                    android:valueType="floatType" />
+            </set>
+        </aapt:attr>
+    </target>
+
+    <!-- ══ PHASE 2: Quadrant tiles materialise (staggered, scale to 0.55) ══ -->
+
+    <target android:name="q1_tile">
+        <aapt:attr name="android:animation">
+            <set android:ordering="together">
+                <objectAnimator
+                    android:propertyName="alpha"
+                    android:valueFrom="0"
+                    android:valueTo="1"
+                    android:duration="350"
+                    android:startOffset="200"
+                    android:interpolator="@android:interpolator/fast_out_slow_in"
+                    android:valueType="floatType" />
+                <objectAnimator
+                    android:propertyName="scaleX"
+                    android:valueFrom="0.25"
+                    android:valueTo="0.55"
+                    android:duration="400"
+                    android:startOffset="200"
+                    android:interpolator="@android:interpolator/overshoot"
+                    android:valueType="floatType" />
+                <objectAnimator
+                    android:propertyName="scaleY"
+                    android:valueFrom="0.25"
+                    android:valueTo="0.55"
+                    android:duration="400"
+                    android:startOffset="200"
+                    android:interpolator="@android:interpolator/overshoot"
+                    android:valueType="floatType" />
+            </set>
+        </aapt:attr>
+    </target>
+
+    <target android:name="q2_tile">
+        <aapt:attr name="android:animation">
+            <set android:ordering="together">
+                <objectAnimator
+                    android:propertyName="alpha"
+                    android:valueFrom="0"
+                    android:valueTo="1"
+                    android:duration="350"
+                    android:startOffset="350"
+                    android:interpolator="@android:interpolator/fast_out_slow_in"
+                    android:valueType="floatType" />
+                <objectAnimator
+                    android:propertyName="scaleX"
+                    android:valueFrom="0.25"
+                    android:valueTo="0.55"
+                    android:duration="400"
+                    android:startOffset="350"
+                    android:interpolator="@android:interpolator/overshoot"
+                    android:valueType="floatType" />
+                <objectAnimator
+                    android:propertyName="scaleY"
+                    android:valueFrom="0.25"
+                    android:valueTo="0.55"
+                    android:duration="400"
+                    android:startOffset="350"
+                    android:interpolator="@android:interpolator/overshoot"
+                    android:valueType="floatType" />
+            </set>
+        </aapt:attr>
+    </target>
+
+    <target android:name="q3_tile">
+        <aapt:attr name="android:animation">
+            <set android:ordering="together">
+                <objectAnimator
+                    android:propertyName="alpha"
+                    android:valueFrom="0"
+                    android:valueTo="1"
+                    android:duration="350"
+                    android:startOffset="500"
+                    android:interpolator="@android:interpolator/fast_out_slow_in"
+                    android:valueType="floatType" />
+                <objectAnimator
+                    android:propertyName="scaleX"
+                    android:valueFrom="0.25"
+                    android:valueTo="0.55"
+                    android:duration="400"
+                    android:startOffset="500"
+                    android:interpolator="@android:interpolator/overshoot"
+                    android:valueType="floatType" />
+                <objectAnimator
+                    android:propertyName="scaleY"
+                    android:valueFrom="0.25"
+                    android:valueTo="0.55"
+                    android:duration="400"
+                    android:startOffset="500"
+                    android:interpolator="@android:interpolator/overshoot"
+                    android:valueType="floatType" />
+            </set>
+        </aapt:attr>
+    </target>
+
+    <target android:name="q4_tile">
+        <aapt:attr name="android:animation">
+            <set android:ordering="together">
+                <objectAnimator
+                    android:propertyName="alpha"
+                    android:valueFrom="0"
+                    android:valueTo="1"
+                    android:duration="350"
+                    android:startOffset="650"
+                    android:interpolator="@android:interpolator/fast_out_slow_in"
+                    android:valueType="floatType" />
+                <objectAnimator
+                    android:propertyName="scaleX"
+                    android:valueFrom="0.25"
+                    android:valueTo="0.55"
+                    android:duration="400"
+                    android:startOffset="650"
+                    android:interpolator="@android:interpolator/overshoot"
+                    android:valueType="floatType" />
+                <objectAnimator
+                    android:propertyName="scaleY"
+                    android:valueFrom="0.25"
+                    android:valueTo="0.55"
+                    android:duration="400"
+                    android:startOffset="650"
+                    android:interpolator="@android:interpolator/overshoot"
+                    android:valueType="floatType" />
+            </set>
+        </aapt:attr>
+    </target>
+
+    <!-- ══ PHASE 3: Checkmark draws on ══ -->
+
+    <target android:name="checkmark_path">
+        <aapt:attr name="android:animation">
+            <set android:ordering="together">
+                <objectAnimator
+                    android:propertyName="trimPathEnd"
+                    android:valueFrom="0"
+                    android:valueTo="1"
+                    android:duration="450"
+                    android:startOffset="800"
+                    android:interpolator="@android:interpolator/fast_out_slow_in"
+                    android:valueType="floatType" />
+            </set>
+        </aapt:attr>
+    </target>
+
+    <!-- ══ PHASE 4: Phone badge pops in ══ -->
+
+    <target android:name="phone_badge_inner">
+        <aapt:attr name="android:animation">
+            <set android:ordering="together">
+                <objectAnimator
+                    android:propertyName="scaleX"
+                    android:valueFrom="0.0"
+                    android:valueTo="1.0"
+                    android:duration="350"
+                    android:startOffset="1100"
+                    android:interpolator="@android:interpolator/overshoot"
+                    android:valueType="floatType" />
+                <objectAnimator
+                    android:propertyName="scaleY"
+                    android:valueFrom="0.0"
+                    android:valueTo="1.0"
+                    android:duration="350"
+                    android:startOffset="1100"
+                    android:interpolator="@android:interpolator/overshoot"
+                    android:valueType="floatType" />
+                <objectAnimator
+                    android:propertyName="alpha"
+                    android:valueFrom="0"
+                    android:valueTo="1"
+                    android:duration="200"
+                    android:startOffset="1100"
+                    android:interpolator="@android:interpolator/linear"
+                    android:valueType="floatType" />
+            </set>
+        </aapt:attr>
+    </target>
+
+</animated-vector>

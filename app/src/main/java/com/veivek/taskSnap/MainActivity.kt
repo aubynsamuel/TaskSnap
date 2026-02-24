@@ -14,6 +14,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.core.content.ContextCompat
 import androidx.core.content.edit
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
+import androidx.lifecycle.lifecycleScope
 import com.veivek.taskSnap.data.service.CallMonitorService
 import com.veivek.taskSnap.presentation.components.SetupWizardScreen
 import com.veivek.taskSnap.presentation.navigation.Navigation
@@ -21,9 +26,12 @@ import com.veivek.taskSnap.presentation.theme.TaskSnapTheme
 import com.veivek.taskSnap.presentation.utils.BatteryOptimizationHelper
 import com.veivek.taskSnap.presentation.utils.OverlayPermissionHelper
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    private var keepSplash = true
 
     companion object {
         private const val TAG = "MainActivity"
@@ -59,6 +67,15 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+
+        val splashScreen = installSplashScreen()
+        splashScreen.setKeepOnScreenCondition { keepSplash }
+
+        lifecycleScope.launch {
+            delay(1600)
+            keepSplash = false
+        }
+
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
@@ -89,6 +106,12 @@ class MainActivity : ComponentActivity() {
                     Navigation(startTaskId = startTaskId)
                 }
             }
+        }
+
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(android.R.id.content)) { view, insets ->
+            val bottom = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom
+            view.updatePadding(bottom = bottom)
+            insets
         }
     }
 
