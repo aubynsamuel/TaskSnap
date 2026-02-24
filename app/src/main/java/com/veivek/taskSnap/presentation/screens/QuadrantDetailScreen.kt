@@ -44,19 +44,9 @@ import com.veivek.taskSnap.presentation.navigation.AppRoutes
 import com.veivek.taskSnap.presentation.navigation.navigate
 import com.veivek.taskSnap.presentation.navigation.popOrStay
 import com.veivek.taskSnap.presentation.theme.ErrorLight
-import com.veivek.taskSnap.presentation.theme.Q1Container
-import com.veivek.taskSnap.presentation.theme.Q1Primary
-import com.veivek.taskSnap.presentation.theme.Q1Secondary
-import com.veivek.taskSnap.presentation.theme.Q2Container
-import com.veivek.taskSnap.presentation.theme.Q2Primary
-import com.veivek.taskSnap.presentation.theme.Q2Secondary
-import com.veivek.taskSnap.presentation.theme.Q3Container
-import com.veivek.taskSnap.presentation.theme.Q3Primary
-import com.veivek.taskSnap.presentation.theme.Q3Secondary
-import com.veivek.taskSnap.presentation.theme.Q4Container
-import com.veivek.taskSnap.presentation.theme.Q4Primary
-import com.veivek.taskSnap.presentation.theme.Q4Secondary
 import com.veivek.taskSnap.presentation.theme.SuccessLight
+import com.veivek.taskSnap.presentation.utils.icon
+import com.veivek.taskSnap.presentation.utils.primaryColor
 import com.veivek.taskSnap.presentation.viewmodel.TaskViewModel
 
 /**
@@ -74,19 +64,8 @@ fun QuadrantDetailScreen(
     val tasks by viewModel.tasksByQuadrant.collectAsState()
     var showAddTaskDialog by remember { mutableStateOf(false) }
 
-    val (primaryColor, secondaryColor, containerColor) = when (quadrant) {
-        Quadrant.Q1_DO_FIRST -> Triple(Q1Primary, Q1Secondary, Q1Container)
-        Quadrant.Q2_SCHEDULE -> Triple(Q2Primary, Q2Secondary, Q2Container)
-        Quadrant.Q3_DELEGATE -> Triple(Q3Primary, Q3Secondary, Q3Container)
-        Quadrant.Q4_DELETE -> Triple(Q4Primary, Q4Secondary, Q4Container)
-    }
-
-    val emoji = when (quadrant) {
-        Quadrant.Q1_DO_FIRST -> "🔥"
-        Quadrant.Q2_SCHEDULE -> "📅"
-        Quadrant.Q3_DELEGATE -> "👥"
-        Quadrant.Q4_DELETE -> "🗑️"
-    }
+    val primaryColor = quadrant.primaryColor
+    val icon = quadrant.icon
 
     LaunchedEffect(Unit) {
         viewModel.observeTasksByQuadrant(quadrant)
@@ -104,7 +83,12 @@ fun QuadrantDetailScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text(text = emoji, style = MaterialTheme.typography.headlineSmall)
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = null,
+                            tint = primaryColor,
+                            modifier = Modifier.padding(bottom = 4.dp)
+                        )
                         Column {
                             Text(
                                 text = quadrant.displayName,
@@ -139,7 +123,6 @@ fun QuadrantDetailScreen(
         if (tasks.isEmpty()) {
             EmptyQuadrantState(
                 quadrant = quadrant,
-                emoji = emoji,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)

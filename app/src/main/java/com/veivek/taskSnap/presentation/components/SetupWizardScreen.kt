@@ -7,8 +7,17 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Message
+import androidx.compose.material.icons.filled.Alarm
+import androidx.compose.material.icons.filled.BatteryChargingFull
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -36,9 +45,10 @@ fun SetupWizardScreen(onComplete: () -> Unit) {
         ) {
             Spacer(modifier = Modifier.height(32.dp))
 
-            Text(
-                text = "📞",
-                style = MaterialTheme.typography.displayLarge
+            Icon(
+                Icons.Default.Phone,
+                contentDescription = null,
+                modifier = Modifier.size(60.dp)
             )
 
             Text(
@@ -59,27 +69,27 @@ fun SetupWizardScreen(onComplete: () -> Unit) {
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     PermissionItem(
-                        icon = "📞",
+                        icon = Icons.Default.Phone,
                         title = "Phone",
                         description = "Detect when calls end"
                     )
                     PermissionItem(
-                        icon = "👤",
+                        icon = Icons.Default.Person,
                         title = "Contacts",
                         description = "Show who you called"
                     )
                     PermissionItem(
-                        icon = "🔔",
+                        icon = Icons.Default.Notifications,
                         title = "Notifications",
                         description = "Background monitoring"
                     )
                     PermissionItem(
-                        icon = "💬",
+                        icon = Icons.AutoMirrored.Filled.Message,
                         title = "Display over apps",
                         description = "Show popup after calls"
                     )
                     PermissionItem(
-                        icon = "🔋",
+                        icon = Icons.Default.BatteryChargingFull,
                         title = "Battery optimization",
                         description = "Reliable background operation"
                     )

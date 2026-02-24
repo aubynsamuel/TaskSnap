@@ -15,11 +15,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CheckBox
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Person
@@ -47,18 +49,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
-import com.veivek.taskSnap.domain.model.Quadrant
 import com.veivek.taskSnap.presentation.components.EnhancedAddTaskDialog
-import com.veivek.taskSnap.presentation.theme.Q1Primary
-import com.veivek.taskSnap.presentation.theme.Q2Primary
-import com.veivek.taskSnap.presentation.theme.Q3Primary
-import com.veivek.taskSnap.presentation.theme.Q4Primary
+import com.veivek.taskSnap.presentation.utils.icon
+import com.veivek.taskSnap.presentation.utils.primaryColor
 import com.veivek.taskSnap.presentation.viewmodel.TaskViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -138,12 +138,9 @@ fun TaskDetailScreen(
     }
 
     val quadrant = currentTask.getQuadrant()
-    val (primaryColor, emoji) = when (quadrant) {
-        Quadrant.Q1_DO_FIRST -> Q1Primary to "🔥 Do First"
-        Quadrant.Q2_SCHEDULE -> Q2Primary to "📅 Schedule"
-        Quadrant.Q3_DELEGATE -> Q3Primary to "👥 Delegate"
-        Quadrant.Q4_DELETE -> Q4Primary to "🗑️ Delete"
-    }
+    val primaryColor = quadrant.primaryColor
+    val icon = quadrant.icon
+    val quadrantName = quadrant.displayName
 
     Scaffold(
         topBar = {
@@ -184,12 +181,23 @@ fun TaskDetailScreen(
                         .background(primaryColor.copy(alpha = 0.1f), RoundedCornerShape(8.dp))
                         .padding(horizontal = 12.dp, vertical = 6.dp)
                 ) {
-                    Text(
-                        text = emoji,
-                        style = MaterialTheme.typography.labelLarge,
-                        color = primaryColor,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = null,
+                            tint = primaryColor,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Text(
+                            text = quadrantName,
+                            style = MaterialTheme.typography.labelLarge,
+                            color = primaryColor,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
                 Spacer(modifier = Modifier.weight(1f))
                 if (currentTask.isCompleted) {
@@ -201,22 +209,34 @@ fun TaskDetailScreen(
                             )
                             .padding(horizontal = 12.dp, vertical = 6.dp)
                     ) {
-                        Text(
-                            text = "✅ Completed",
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
-                            fontWeight = FontWeight.Bold
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(5.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.CheckBox,
+                                tint = Color.Green,
+                                contentDescription = null
+                            )
+                            Text(
+                                text = "Completed",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
                 }
             }
 
             // Title
-            Text(
-                text = currentTask.title,
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold
-            )
+            SelectionContainer {
+                Text(
+                    text = currentTask.title,
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
 
             // Description
             if (currentTask.description.isNotBlank()) {
@@ -226,13 +246,15 @@ fun TaskDetailScreen(
                     ),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text(
-                        text = currentTask.description,
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp)
-                    )
+                    SelectionContainer {
+                        Text(
+                            text = currentTask.description,
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp)
+                        )
+                    }
                 }
             }
 

@@ -41,7 +41,7 @@
             android:name=".MainActivity"
             android:exported="true"
             android:launchMode="singleTop"
-            android:theme="@style/Theme.TaskSnap">
+            android:theme="@style/Theme.App.Starting">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -91,10 +91,10 @@
 
         <activity
             android:name=".taskActivities.CallEndedOverlayActivity"
-            android:theme="@style/Theme.TaskSnap.OverlayDialog"
+            android:excludeFromRecents="true"
             android:exported="false"
             android:taskAffinity=""
-            android:excludeFromRecents="true" />
+            android:theme="@style/Theme.TaskSnap.OverlayDialog" />
 
         <!-- 
         Feature 1: Call Monitor Foreground Service

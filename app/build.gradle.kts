@@ -63,6 +63,9 @@ android {
 }
 
 dependencies {
+    // SplashScreen
+    implementation(libs.androidx.core.splashscreen)
+
     // Navigation 3 Compose
     implementation(libs.androidx.navigation3.ui)
     implementation(libs.androidx.navigation3.runtime)
