@@ -42,9 +42,7 @@ fun PriorityToggle(
     color: Color,
 ) {
     Surface(
-        modifier = Modifier
-            .clickable(onClick = onToggle)
-            .fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         color = if (isSelected) color.copy(alpha = 0.1f) else MaterialTheme.colorScheme.surfaceVariant,
         border = BorderStroke(
@@ -53,7 +51,10 @@ fun PriorityToggle(
         )
     ) {
         Row(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onToggle)
+                .padding(16.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
